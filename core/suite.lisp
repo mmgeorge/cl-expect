@@ -7,12 +7,12 @@
 (in-package :expect/suite)
 
 
-(defvar *suites* (make-hash-table :test 'equal))
+(defvar *suites* (make-hash-table :test 'eq))
 
 
 (defclass suite ()
-  ((package :initarg :package)
-   (tests :accessor tests  :initform (make-hash-table)  :type 'hash-table)))
+  ((package :accessor package-of :initarg :package)
+   (tests :accessor tests :initform (make-hash-table :test 'equal)  :type 'hash-table)))
 
 
 (defun make-suite (package)
@@ -26,11 +26,36 @@
 
 
 (defun suite-of (package)
-  (or (gethash (package-name package) *suites*)
-      (setf (gethash (package-name package) *suites*)
-            (make-suite package))))
+  (let ((*print-case* :downcase))
+    
+  (or (gethash package *suites*)
+      (setf (gethash package *suites*)
+            (make-suite package)))))
 
 
 (defun run (self)
-  (loop for test being the hash-values of (tests self) do
-        (test:run test)))
+  (let ((failures
+          (loop for test being the hash-values of (tests self)
+                for failures = (test:run test)
+                if failures
+                  collect (list test failures))))
+    (mapcar #'(lambda (failure) (print-failure self failure)) failures)))
+
+
+(defun print-failure (self test-failure)
+  (let ((*print-case* :downcase))
+
+
+  (destructuring-bind (test failures) test-failure
+    (format t "Test ~a:~a had [~a] failures:~%"
+            (package-name (package-of self)) (test:name test) (length failures))
+    (loop for failure in failures
+          for i from 1 do
+      (progn
+        (format t "  [~a] " i)
+        (test:print-result failure)))
+    (format t "~%")
+    
+  )))
+
+
