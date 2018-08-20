@@ -2,31 +2,41 @@
   (:use :cl)
   (:import-from :expect #:deftest-of #:expect #:run-tests))
 
-(in-package :expect)
+(in-package :example)
 
 
-(defun my-nothing ()
-  (+ 1 1))
+(defun add (a b)
+  (+ a b))
+
+(deftest-of add ()
+  (expect (eql (add 1 1) 2))
+  (expect (eql (add 1 1) 3))
+  (expect (eql (add "1" 2) 3)))
 
 
-(defun my-nothing-2 ()
-  (+ 1 1))
+(defun sub (a b)
+  (+ a b))
+
+(deftest-of sub ()
+  (expect (eql (sub 1 1) 0)))
 
 
-(deftest-of my-nothing ()
-  (expect (eql 1 1))
-  (expect (eql 2 3))
-  (expect (eql 3 4)))
+(defun div (a b)
+  (/ a b))
+
+(deftest-of div ()
+  (expect (eql (div 3 0) 1))
+  (expect (eql (div 3 3) 1))
+  (expect (typep (div 3 0) 'error))
+  (expect (equal (div 3 "0") (make-condition 'type-error))))
 
 
-(deftest-of my-nothing-2 ()
-  (expect (eql 1 1))
-  (expect (eql 2 3))
-  (expect (eql 3 4)))
+(defun deferred (a)
+  (blackbird:with-promise (resolve reject)
+    (resolve a)))
 
-
-(deftest-of my-pass ()
-  (expect (eql 3 3)))
+(deftest-of deferred ()
+  (expect (eql (deferred 3) 3)))
 
 
 (run-tests)

@@ -28,7 +28,7 @@
 
 
 (defmethod record ((report report) child)
-  (setf (children report) (cons child (children report))))
+  (setf (children report) (nconc (children report) (list child))))
 
 
 (defmethod print-report ((report report) indent)
