@@ -1,16 +1,15 @@
 (defpackage :expect/report/expect
   (:use :cl)
   (:import-from :dissect)
-  (:import-from :expect/report/report)
-  (:export #:expect #:make-expect #:failed #:ref #:lhs #:rhs)
+  (:import-from :expect/report/report #:failed)
+  (:export #:expect #:make-expect #:ref #:lhs #:rhs)
   (:local-nicknames (:report :expect/report/report)))
 
 (in-package :expect/report/expect)
 
 
 (defclass expect (report:report)
-  ((failed :reader failed :initarg :failed)
-   (predicate :reader predicate :initarg :predicate)
+  ((predicate :reader predicate :initarg :predicate)
    (form :reader form :initarg :form)
    (expected :reader expected :initarg :expected)
    (lhs :reader lhs :initarg :lhs)

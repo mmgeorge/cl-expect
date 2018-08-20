@@ -7,15 +7,14 @@
 (in-package :expect/report/suite)
 
 
-(defclass suite (report:report)
-  ()
-  )
+(defclass suite (report:report) ())
 
 
-(defun make-suite ()
-  (make-instance 'suite))
+(defun make-suite (len)
+  (make-instance 'suite :len len))
 
 
 (defmethod report:print-report ((self suite) indent)
-  (call-next-method))
+  (let ((*print-case* :downcase))
+    (call-next-method)))
 

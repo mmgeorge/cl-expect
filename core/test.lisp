@@ -3,21 +3,16 @@
   (:import-from :dissect)
   (:import-from :expect/expect #:expect)
   (:import-from :expect/report/report #:record #:children)
+  (:import-from :expect/report/report)
   (:import-from :expect/report/test)
   (:import-from :expect/report/expect)
   (:export #:make-test #:name #:body #:add #:expects #:run #:print-result #:suite-name)
   (:local-nicknames (:expect :expect/expect)
+                    (:report :expect/report/report)
                     (:report/expect :expect/report/expect)
                     (:report/test :expect/report/test)))
 
 (in-package :expect/test)
-
-
-(defstruct result
-  failed
-  expect
-  lhs
-  rhs)
 
 
 (defclass test ()
@@ -39,10 +34,9 @@
         (count (length (expects self))))
     (loop for expect across (expects self)
           for result = (safe-eval-expect expect)
-          if (report/expect:failed result)
             do (record report result))
-    (if (> (length (children report)) 0)
-        (format t "[FAIL] ~a:~a [~a/~a]~%" (suite-name self) (name self) (- count (length (children report))) count)
+    (if (> (report:nested-failed-length report) 0)
+        (format t "[FAIL] ~a:~a [~a/~a]~%" (suite-name self) (name self) (- count (report:nested-failed-length report)) count)
         (format t "[PASS] ~a:~a [~a/~a]~%" (suite-name self) (name self) count count))
     report))
 
@@ -72,6 +66,9 @@
         (eval-expect expect)))
 
       (dump-stack ()
-        (report/expect:make-expect enviornment (expect:predicate expect) (expect:form expect) (expect:expected expect) nil nil)))))
+        (report/expect:make-expect enviornment
+                                   (expect:predicate expect)
+                                   (expect:form expect)
+                                   (expect:expected expect) nil nil)))))
 
 

@@ -37,13 +37,8 @@
 
 
 (defun run (self)
-  (let ((report (report/suite:make-suite)))
+  (let ((report (report/suite:make-suite (hash-table-count (tests self)))))
     (loop for test being the hash-values of (tests self)
           for test-report = (test:run test)
           do (record report test-report))
     report))
-
-    
-;    (when print-failures
- ;     (mapcar #'(lambda (failure) (print-failed-test self failure)) failures))
-    ;failures))
