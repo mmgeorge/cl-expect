@@ -24,6 +24,7 @@
 (defgeneric print-report (report indent))
 (defgeneric summarize (report))
 (defgeneric has-children-p (report))
+(defgeneric nested-failed-length (report))
 
 
 (defmethod record ((report report) child)

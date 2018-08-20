@@ -4,12 +4,7 @@
 (asdf:defsystem "expect"
   :class :package-inferred-system
   :pathname "core"
-  :depends-on (:expect/runner
-               :expect/macros
-               :expect/example/example
-               :expect/example/example2)
-  ;;:in-order-to ((asdf:test-op (asdf:test-op "expect/test")))
-
+  :depends-on (:expect/exports)
   )
 
 

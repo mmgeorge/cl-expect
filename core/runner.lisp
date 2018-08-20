@@ -16,9 +16,11 @@
 (defun run-tests (&optional (package-or-system-name *package*))
   (if (typep package-or-system-name 'string)
       (run package-or-system-name)
-      (let ((report (suite:run (suite:suite-of package-or-system-name))))
-        (report:print-report report 0)
-        (report:summarize report)))
+      (if (not (suite:suite-exists-p package-or-system-name))
+          (format t "No tests to run")
+          (let ((report (suite:run (suite:suite-of package-or-system-name))))
+            (report:print-report report 0)
+            (report:summarize report))))
   nil)
 
 
@@ -37,10 +39,13 @@
 (defun run-system (system)
   (let* ((children (gather-children system))
          (names (mapcar #'asdf:component-name children))
-         (reports (mapcar (lambda (name) (suite:run (suite:suite-of name))) names))
-         (report (report:make-report (remove-if-not #'report:has-children-p reports))))
-    (report:print-report report 0)
-    (report:summarize report)))
+         (reports (remove-if-not #'report:has-children-p 
+                                 (mapcar (lambda (name) (suite:run (suite:suite-of name))) names)))
+         (report (report:make-report reports)))
+    (if (> (length reports) 0)
+        (progn (report:print-report report 0)
+               (report:summarize report))
+        (format t "No tests specified"))))
 
 
 (defun gather-children (system &optional (visited nil))

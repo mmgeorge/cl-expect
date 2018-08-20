@@ -3,7 +3,7 @@
   (:import-from :expect/test)
   (:import-from :expect/report/report #:record)
   (:import-from :expect/report/suite)
-  (:export #:suite-of #:register #:tests #:run)
+  (:export #:suite-of #:suite-exists-p #:register #:tests #:run)
   (:local-nicknames (:test :expect/test)
                     (:report :expect/report/report)
                     (:report/suite :expect/report/suite)))
@@ -27,6 +27,11 @@
   (when (gethash (test:name test) (tests self))
     (format t "Redefining test definition for ~a" (test:name test)))
   (setf (gethash (test:name test) (tests self)) test))
+
+
+(defun suite-exists-p (package)
+  (let ((name (string-downcase (if (typep package 'string) package (package-name package)))))
+    (gethash name *suites*)))
 
 
 (defun suite-of (package)
