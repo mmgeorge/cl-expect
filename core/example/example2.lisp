@@ -1,10 +1,10 @@
-(defpackage :expect/example
+(defpackage :expect/example/example2
   (:use :cl)
   (:import-from :expect/macros #:deftest-of #:expect)
   (:import-from :expect/suite)
   (:local-nicknames (:suite :expect/suite)))
 
-(in-package :expect/example)
+(in-package :expect/example/example2)
 
 
 (defun my-nothing ()

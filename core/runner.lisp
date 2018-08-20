@@ -2,13 +2,21 @@
   (:use :cl)
   (:import-from :expect/suite)
   (:import-from :expect/test)
+  (:import-from :expect/report/report)
   (:import-from :expect/macros #:deftest-of)
   (:import-from :blackbird)
+  (:export #:run #:run-tests)
   (:local-nicknames (:suite :expect/suite)
-                    (:test :expect/test))
-  (:export #:run))
+                    (:test :expect/test)
+                    (:report :expect/report/report)))
 
 (in-package :expect/runner)
+
+
+(defun run-tests (&optional (package-or-system-name *package*))
+  (if (typep package-or-system-name 'string)
+      (run package-or-system-name)
+      (report:print-report (suite:run (suite:suite-of package-or-system-name)) 0)))
 
 
 (defun run (system-name)
@@ -24,24 +32,11 @@
   
 
 (defun run-system (system)
-  (let ((children (gather-children system)))
-    children
+  (let* ((children (gather-children system))
+         (names (mapcar #'asdf:component-name children))
+         (reports (mapcar (lambda (name) (suite:run (suite:suite-of name))) names)))
+    (mapcar (lambda (report) (report:print-report report 0)) reports)))
 
-    ))
-
-
-(defvar run-system nil)
-
-
-  
- ;; (deftest-of run-system ()
- ;;   (with-fixtures (test-system)
- ;;     (expect (equal (run-system 1) 1))
- ;;     (expect (equal (run-system 12) 12)))
-
-  
-;; (expect (run-system 1)) result)
-;; (expect (run-system 1))  result)
 
 (defun gather-children (system &optional (visited nil))
   ;; A "proper-dep" is a dependency with the same primary system name (i.e., not an external library)
@@ -50,4 +45,3 @@
     (let* ((proper-deps (remove-if-not #'proper-dep-p (mapcar #'asdf:find-system (asdf:system-depends-on system))))
            (unvisited-deps (set-difference proper-deps visited :test #'component-equal)))
       (reduce #'recurse unvisited-deps :initial-value (append unvisited-deps visited)))))
-    

@@ -6,7 +6,8 @@
   :pathname "core"
   :depends-on (:expect/runner
                :expect/macros
-               :expect/example)
+               :expect/example/example
+               :expect/example/example2)
   ;;:in-order-to ((asdf:test-op (asdf:test-op "expect/test")))
 
   )
