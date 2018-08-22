@@ -28,7 +28,7 @@
   (expect (eql (div 3 0) 1))
   (expect (eql (div 3 3) 1))
   (expect (typep (div 3 0) 'error))
-  (expect (equal (div 3 "0") (make-condition 'type-error))))
+  (expect (eq (div 3 "0") (make-condition 'type-error)))) ;; Does a class-of comparison
 
 
 (defun deferred (a)
