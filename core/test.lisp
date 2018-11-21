@@ -15,12 +15,13 @@
 
 (defclass test ()
   ((name :reader name :initarg :name)
+   (description :reader description :initarg :description)
    (suite-name :reader suite-name :initarg :suite-name)
    (expects :reader expects :initform (make-array 0 :fill-pointer t :adjustable t))))
 
 
-(defun make-test (name suite-name)
-  (make-instance 'test :name name :suite-name suite-name))
+(defun make-test (name description suite-name)
+  (make-instance 'test :name name :description description :suite-name suite-name))
 
 
 (defun add (self expect)

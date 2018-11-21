@@ -15,10 +15,12 @@
 
 
 (defun sub (a b)
-  (+ a b))
+  (- a b))
 
 (deftest-of sub ()
-  (expect (eql (sub 1 1) 0)))
+  "hello world"
+  (let ((var 1))
+    (expect (eql (sub 1 var) 2))))
 
 
 (defun div (a b)

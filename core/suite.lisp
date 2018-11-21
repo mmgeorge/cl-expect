@@ -24,9 +24,12 @@
 
 
 (defun register (self test)
-  (when (gethash (test:name test) (tests self))
-    (format t "Redefining test definition for ~a" (test:name test)))
-  (setf (gethash (test:name test) (tests self)) test))
+  (let ((tests (gethash (test:name test) (tests self))))
+    (format t "Adding test definition for ~a" (test:name test))
+    (setf (gethash (test:name test) (tests self))
+          (if tests 
+              (append tests (list test))
+              (list test)))))
 
 
 (defun suite-exists-p (package)
@@ -43,7 +46,8 @@
 
 (defun run (self)
   (let ((report (report/suite:make-suite (hash-table-count (tests self)))))
-    (loop for test being the hash-values of (tests self)
-          for test-report = (test:run test)
-          do (record report test-report))
+    (loop for function-tests being the hash-values of (tests self) do
+      (loop for test in function-tests
+            for test-report = (test:run test) do
+              (record report test-report)))
     report))
