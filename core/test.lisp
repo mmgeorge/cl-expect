@@ -5,7 +5,7 @@
   (:import-from :expect/report/report #:record #:children)
   (:import-from :expect/report/report)
   (:import-from :expect/report/test)
-  (:export #:make-test #:name #:body #:add #:expects #:run #:print-result #:suite-name)
+  (:export #:make-test #:name #:description #:suite-name #:body #:add #:expects #:run #:print-result)
   (:local-nicknames (:expect :expect/expect)
                     (:report :expect/report/report)
                     (:report/test :expect/report/test)))
@@ -21,7 +21,10 @@
 
 
 (defun make-test (name description suite-name)
-  (make-instance 'test :name name :description description :suite-name suite-name))
+  (make-instance 'test :name (string-downcase name)
+                       :description description
+                       :suite-name (string-downcase suite-name)))
+
 
 
 (defun add (self expect)
@@ -29,13 +32,11 @@
 
 
 (defun run (self)
-  (let ((report (report/test:make-test (name self) (suite-name self)))
-        (count (length (expects self))))
-    (loop for expect across (expects self)
-          for result = (expect:safe-eval expect)
+  (with-accessors ((suite-name suite-name) (name name) (description description)) self
+    (let ((report (report/test:make-test (name self) (suite-name self) (description self))))
+      (loop for expect across (expects self)
+            for result = (expect:safe-eval expect)
             do (record report result))
-    (if (> (report:nested-failed-length report) 0)
-        (format t "[FAIL] ~a:~a [~a/~a]~%" (suite-name self) (name self) (- count (report:nested-failed-length report)) count)
-        (format t "[PASS] ~a:~a [~a/~a]~%" (suite-name self) (name self) count count))
-    report))
+      report)))
+      
 

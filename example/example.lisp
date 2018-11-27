@@ -9,36 +9,51 @@
   (+ a b))
 
 (deftest-of add ()
-  (expect (eql (add 1 1) 2))
-  (expect (eql (add 1 1) 3))
-  (expect (eql (add "1" 2) 3)))
+  "check 2 + 1 = 3"
+  ;(expect (eql (add 1 1) 2))
+  (expect (eql (add 1 2) 3))
+  )
 
 
 (defun sub (a b)
   (- a b))
 
 (deftest-of sub ()
-  "hello world"
+  "check 3 - 1 = 2"
   (let ((var 1))
-    (expect (eql (sub 1 var) 2))))
+    (expect (eql (sub 3 var) 2))))
+
+(deftest-of sub ()
+  "check 3 - 1 = 2 - no!"
+  (let ((var 1))
+    (expect (eql (sub 3 var) 12))))
+
+
+
+(deftest-of sub ()
+  "check 1 - 1 = 2 - Bad test!!"
+  (let ((var 1))
+    (expect (eql (sub 1 var) 2))
+    (expect (eql (sub 1 var) 3))
+    ))
 
 
 (defun div (a b)
   (/ a b))
 
-(deftest-of div ()
-  (expect (eql (div 3 0) 1))
-  (expect (eql (div 3 3) 1))
-  (expect (typep (div 3 0) 'error))
-  (expect (eq (div 3 "0") (make-condition 'type-error)))) ;; Does a class-of comparison
+;; (deftest-of div ()
+;;   (expect (eql (div 3 0) 1))
+;;   (expect (eql (div 3 3) 1))
+;;   (expect (typep (div 3 0) 'error))
+;;   (expect (eq (div 3 "0") (make-condition 'type-error)))) ;; Does a class-of comparison
 
 
-(defun deferred (a)
-  (blackbird:with-promise (resolve reject)
-    (resolve a)))
+;; (defun deferred (a)
+;;   (blackbird:with-promise (resolve reject)
+;;     (resolve a)))
 
-(deftest-of deferred ()
-  (expect (eql (deferred 3) 3)))
+;; (deftest-of deferred ()
+;;   (expect (eql (deferred 3) 3)))
 
 
-(run-tests)
+;; (run-tests)

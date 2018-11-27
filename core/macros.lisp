@@ -22,12 +22,14 @@
                               ,desc
                               (package-name (symbol-package ',function)))))
        (suite:register (suite:suite-of *package*) *cl-expect-test*)
-       (macroexpand ,@(cdr body))
+       ,@(mapcar #'macroexpand (cdr body))
        *cl-expect-test*))))
 
 
 (defmacro expect ((predicate form expected))
+  (let ((uneval `(,predicate ,form ,expected)))
+    (format t "uneval ~a" uneval)
     `(progn 
        (unless *cl-expect-test*
          (error "Expect must be called within a test!"))
-       (test:add *cl-expect-test* (make-expect ',predicate ,form ,expected))))
+       (test:add *cl-expect-test* (make-expect ',uneval ',predicate ,form ,expected)))))

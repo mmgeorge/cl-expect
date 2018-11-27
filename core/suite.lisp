@@ -3,7 +3,7 @@
   (:import-from :expect/test)
   (:import-from :expect/report/report #:record)
   (:import-from :expect/report/suite)
-  (:export #:suite-of #:suite-exists-p #:register #:tests #:run)
+  (:export #:suite-of #:suite-exists-p #:register #:clear #:tests #:run)
   (:local-nicknames (:test :expect/test)
                     (:report :expect/report/report)
                     (:report/suite :expect/report/suite)))
@@ -25,11 +25,28 @@
 
 (defun register (self test)
   (let ((tests (gethash (test:name test) (tests self))))
-    (format t "Adding test definition for ~a" (test:name test))
+    (format t "Adding test definition for ~a~%" (test:name test))
     (setf (gethash (test:name test) (tests self))
-          (if tests 
-              (append tests (list test))
+          (if tests
+              (insert-or-replace-test test tests)
               (list test)))))
+
+
+(defun insert-or-replace-test (test list-of-tests)
+  (flet ((same-test-p (target)
+           (and (string-equal (test:suite-name target) (test:suite-name test))
+                (string-equal (test:name target) (test:name test))
+                (string-equal (test:description target) (test:description test)))))
+    (let ((pos (position-if #'same-test-p list-of-tests)))
+      (if pos
+          (setf (nth pos list-of-tests) test)
+          (nconc list-of-tests (list test)))
+      list-of-tests)))
+
+
+(defun clear (self)
+  (format t "Removing ~a tests for ~a" (hash-table-count (tests self)) (package-of self))
+  (setf (tests self) (make-hash-table :test 'equal)))
 
 
 (defun suite-exists-p (package)
@@ -45,9 +62,27 @@
 
 
 (defun run (self)
-  (let ((report (report/suite:make-suite (hash-table-count (tests self)))))
-    (loop for function-tests being the hash-values of (tests self) do
-      (loop for test in function-tests
-            for test-report = (test:run test) do
-              (record report test-report)))
+  (let ((report (report/suite:make-suite (hash-table-count (tests self))))
+        (suite-name (package-of self)))
+    (loop for function-tests being the hash-values of (tests self) using (hash-key test-name) do
+      (let ((result-stream (make-string-output-stream))
+            (passed-test-count 0))
+        (loop for test in function-tests
+              for count = (length (test:expects test))
+              for desc = (test:description test)
+              for test-report = (test:run test) do
+                (if (> (report:nested-failed-length test-report) 0)
+                    (format result-stream "   - ~a [~a/~a]~%" desc
+                            (- count (report:nested-failed-length test-report)) count)
+                    (incf passed-test-count))
+              ;(format t "Hi world~%")
+                (record report test-report)
+                ;(describe test-report )
+              )
+        (let* ((test-count (length function-tests))
+               (result (if (eq passed-test-count test-count) "PASS" "FAIL")))
+        (format t "[~a] ~a:~a [~a/~a]~%~a" result suite-name test-name passed-test-count test-count
+                (get-output-stream-string result-stream)))
+        ))
     report))
+

@@ -5,7 +5,7 @@
   (:import-from :expect/report/report)
   (:import-from :expect/macros #:deftest-of)
   (:import-from :blackbird)
-  (:export #:run #:run-tests)
+  (:export #:run #:run-tests #:clear-tests)
   (:local-nicknames (:suite :expect/suite)
                     (:test :expect/test)
                     (:report :expect/report/report)))
@@ -21,6 +21,15 @@
           (let ((report (suite:run (suite:suite-of package-or-system-name))))
             (report:print-report report 0)
             (report:summarize report))))
+  nil)
+
+
+(defun clear-tests (&optional (package-or-system-name *package*))
+  (if (typep package-or-system-name 'string)
+      (run package-or-system-name)
+      (if (not (suite:suite-exists-p package-or-system-name))
+          (format t "No tests to remove")
+          (suite:clear (suite:suite-of package-or-system-name))))
   nil)
 
 

@@ -11,13 +11,14 @@
 
 
 (defclass expect ()
-  ((predicate :reader predicate :initarg :predicate)
+  ((uneval :reader uneval :initarg :uneval)
+   (predicate :reader predicate :initarg :predicate)
    (form :reader form :initarg :form)
    (expected :reader expected :initarg :expected)))
 
 
-(defun make-expect (predicate form expected)
-  (make-instance 'expect :predicate predicate :form form :expected expected))
+(defun make-expect (uneval predicate form expected)
+  (make-instance 'expect :uneval uneval :predicate predicate :form form :expected expected))
 
 
 (defmethod make-load-form ((self expect) &optional env)
@@ -37,7 +38,7 @@
                    (class-of condition)
                    (class-of (eval expected))))
     (t (e)
-      (declare (ignore e))
+      (format t "Encountered error ~a" e)
       nil)))
 
 
@@ -57,9 +58,9 @@
                     (handler-bind ((error #'handle-error))
                       (eval-expect expect)))
       (condition-pred-holds ()
-        (report/expect:make-expect nil (predicate expect) (form expect) (expected expect) nil nil))
+        (report/expect:make-expect nil (uneval expect) (predicate expect) (form expect) (expected expect) nil nil))
       (capture ()
-        (report/expect:make-expect enviornment (predicate expect) (form expect) (expected expect) nil nil))))))
+        (report/expect:make-expect enviornment (uneval expect) (predicate expect) (form expect) (expected expect) nil nil))))))
 
 
 (defun eval-expect (expect)
@@ -72,6 +73,6 @@
       (loop while (not (blackbird:promise-finished-p form)) do (sleep 0.250))
       (blackbird:attach form (lambda (result) (setf form result))))
     (if (funcall predicate form expected)
-        (report/expect:make-expect nil (predicate expect) (form expect) (expected expect) form expected)
-        (report/expect:make-expect t (predicate expect) (form expect) (expected expect) form expected))))
+        (report/expect:make-expect nil (uneval expect) (predicate expect) (form expect) (expected expect) form expected)
+        (report/expect:make-expect t (uneval expect) (predicate expect) (form expect) (expected expect) form expected))))
 
