@@ -62,7 +62,7 @@
 
 
 (defun run (self)
-  (let ((report (report/suite:make-suite (hash-table-count (tests self))))
+  (let ((report (report/suite:make-suite (hash-table-count (tests self)) (package-of self)))
         (suite-name (package-of self)))
     (loop for function-tests being the hash-values of (tests self) using (hash-key test-name) do
       (let ((result-stream (make-string-output-stream))
@@ -81,8 +81,9 @@
               )
         (let* ((test-count (length function-tests))
                (result (if (eq passed-test-count test-count) "PASS" "FAIL")))
-        (format t "[~a] ~a:~a [~a/~a]~%~a" result suite-name test-name passed-test-count test-count
-                (get-output-stream-string result-stream)))
+        (format t "[~a] ~a:~a [~a/~a]~%" result suite-name test-name passed-test-count test-count
+                ;(get-output-stream-string result-stream)
+                ))
         ))
     report))
 

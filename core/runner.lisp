@@ -12,6 +12,49 @@
 
 (in-package :expect/runner)
 
+(defun make-test-file (&optional (package *package*))
+  (let ((package-name (string-downcase (package-name package)))
+        (path (test-file-path package)))
+    (format t "Writing test file at ~a~%" path)
+    (handler-case 
+        (with-open-file (ostream (pathname path) :direction :output :if-does-not-exist :create)
+          (format ostream "(defpackage :~a.test ~%  (:use :cl :~a))~%~%(in-package :~a.test)~%"
+                  package-name package-name package-name))
+      (t ()
+        (format t "Unable to write file as it already exists!")))))
+
+
+(defun test-file-path (package)
+  (let* ((system (find-current-system))
+         (path-base (namestring (asdf:component-pathname system)))
+         (package-relative-path (package-relative-path package))
+         (extension ".test.lisp"))
+    (check-type system asdf:package-inferred-system "Expect expects a package-inferred-system")
+    (concatenate 'string path-base package-relative-path extension)))
+
+
+(defun package-relative-path (package)
+  (let* ((name (package-name package))
+         (start (loop for i from 0
+                  for char across name until (eq char #\/)
+                  finally (return (1+ i)))))
+    (string-downcase (subseq name start))))
+
+
+(defun parent-directory (pathname)
+  (make-pathname :directory (butlast (pathname-directory pathname))))
+
+
+(defun find-system-file (directory)
+  (flet ((asd-file-p (pathname) (string-equal (pathname-type pathname) "asd")))
+    (or (find-if #'asd-file-p (uiop:directory-files directory))
+        (find-system-file (parent-directory directory)))))
+        
+
+(defun find-current-system ()
+  (let ((system-name (pathname-name (find-system-file *default-pathname-defaults*))))
+    (asdf:find-system system-name)))
+
 
 (defun run-tests (&optional (package-or-system-name *package*))
   (if (typep package-or-system-name 'string)

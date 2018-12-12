@@ -7,11 +7,12 @@
 (in-package :expect/report/suite)
 
 
-(defclass suite (report:report) ())
+(defclass suite (report:report)
+  ((suite-name :reader suite-name :initarg :suite-name)))
 
 
-(defun make-suite (len)
-  (make-instance 'suite :len len))
+(defun make-suite (len suite-name)
+  (make-instance 'suite :len len :suite-name suite-name))
 
 
 (defmethod report:print-report ((self suite) indent)

@@ -17,13 +17,16 @@
     (unless (typep desc 'string)
       (error "Malformed deftest-of form. Expected to find test description but found ~a" (type-of desc)))
   `(progn
-     (let ((*cl-expect-test* (test:make-test 
-                              ',function
-                              ,desc
-                              (package-name (symbol-package ',function)))))
-       (suite:register (suite:suite-of *package*) *cl-expect-test*)
-       ,@(mapcar #'macroexpand (cdr body))
-       *cl-expect-test*))))
+     (let ((test (test:make-test 
+                  ',function
+                  ,desc
+                  (package-name (symbol-package ',function)))))
+       (setf (test:body test )
+             (lambda ()
+               (let ((*cl-expect-test* test))
+                 ,@(mapcar #'macroexpand (cdr body)))))
+       (suite:register (suite:suite-of *package*) test))
+       *cl-expect-test*)))
 
 
 (defmacro expect ((predicate form expected))
