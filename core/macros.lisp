@@ -31,7 +31,6 @@
 
 (defmacro expect ((predicate form expected))
   (let ((uneval `(,predicate ,form ,expected)))
-    (format t "uneval ~a" uneval)
     `(progn 
        (unless *cl-expect-test*
          (error "Expect must be called within a test!"))

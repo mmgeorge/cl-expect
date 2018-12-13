@@ -49,13 +49,25 @@
   (setf (tests self) (make-hash-table :test 'equal)))
 
 
+(defun name (package)
+  (let* ((package-name (if (typep package 'string) package (package-name package)))
+         (len (length package-name)))
+    (if (and (> len 5) (string-equal (subseq package-name (- len 5) len) ".test"))
+        (subseq package-name 0 (- len 5))
+        package-name)))
+    
+
+    
+  ;(concatenate 'string (string-downcase ) ".test"))
+
+
 (defun suite-exists-p (package)
-  (let ((name (string-downcase (if (typep package 'string) package (package-name package)))))
+  (let ((name (name package)))
     (gethash name *suites*)))
 
 
 (defun suite-of (package)
-  (let ((name (string-downcase (if (typep package 'string) package (package-name package)))))
+  (let  ((name (name package)))
     (or (gethash name *suites*)
         (setf (gethash name *suites*)
               (make-suite name)))))

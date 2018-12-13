@@ -28,6 +28,6 @@
          (print-failed-env (failed-env self) (+ report:*indent-amount* indent)))
         ((find-if #'failed (report:children self))
          (format t "~%")
-         (format t "~Va ~a:~a [~a] had [~a] failures:~%"
+         (format t "~Va ~a:~a [~a] failed [~a] expects:~%"
                  indent "Test of" (suite-name self) (name self) (description self) (report:nested-failed-length self))
          (call-next-method))))

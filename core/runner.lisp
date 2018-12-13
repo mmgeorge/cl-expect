@@ -56,14 +56,24 @@
     (asdf:find-system system-name)))
 
 
+(defun load-test-file (package)
+  (let ((path (test-file-path package)))
+    (with-open-file (infile (pathname path) :direction :input)
+      (loop for input = (read infile nil)
+            while input
+            do (eval input)))))
+
+
 (defun run-tests (&optional (package-or-system-name *package*))
   (if (typep package-or-system-name 'string)
       (run package-or-system-name)
-      (if (not (suite:suite-exists-p package-or-system-name))
-          (format t "No tests to run")
-          (let ((report (suite:run (suite:suite-of package-or-system-name))))
-            (report:print-report report 0)
-            (report:summarize report))))
+      ;(if (not (suite:suite-exists-p package-or-system-name))
+       ;   (format t "No tests to run") 
+          (progn
+            (load-test-file package-or-system-name)
+            (let ((report (suite:run (suite:suite-of package-or-system-name))))
+              (report:print-report report 0)
+              (report:summarize report))))
   nil)
 
 
