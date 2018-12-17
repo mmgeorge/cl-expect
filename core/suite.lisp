@@ -3,7 +3,7 @@
   (:import-from :expect/test)
   (:import-from :expect/report/report #:record)
   (:import-from :expect/report/suite)
-  (:export #:suite-of #:suite-exists-p #:register #:clear #:tests #:run)
+  (:export #:suite-of #:suite-exists-p #:register #:clear #:tests #:run #:load-timestamp)
   (:local-nicknames (:test :expect/test)
                     (:report :expect/report/report)
                     (:report/suite :expect/report/suite)))
@@ -16,7 +16,8 @@
 
 (defclass suite ()
   ((package-of :accessor package-of :initarg :package)
-   (tests :accessor tests :initform (make-hash-table :test 'equal)  :type 'hash-table)))
+   (tests :accessor tests :initform (make-hash-table :test 'equal)  :type 'hash-table)
+   (load-timestamp :accessor load-timestamp :initform nil)))
 
 
 (defun make-suite (package)
@@ -50,12 +51,12 @@
 
 
 (defun name (package)
-  (let* ((package-name (if (typep package 'string) package (package-name package)))
+  (let* ((package-name (string-downcase (if (typep package 'string) package (package-name package))))
          (len (length package-name)))
     (if (and (> len 5) (string-equal (subseq package-name (- len 5) len) ".test"))
         (subseq package-name 0 (- len 5))
         package-name)))
-    
+
 
     
   ;(concatenate 'string (string-downcase ) ".test"))
@@ -87,15 +88,9 @@
                     (format result-stream "   - ~a [~a/~a]~%" desc
                             (- count (report:nested-failed-length test-report)) count)
                     (incf passed-test-count))
-              ;(format t "Hi world~%")
-                (record report test-report)
-                ;(describe test-report )
-              )
+                (record report test-report))
         (let* ((test-count (length function-tests))
                (result (if (eq passed-test-count test-count) "PASS" "FAIL")))
-        (format t "[~a] ~a:~a [~a/~a]~%" result suite-name test-name passed-test-count test-count
-                ;(get-output-stream-string result-stream)
-                ))
-        ))
+        (format t "[~a] ~a:~a [~a/~a]~%" result suite-name test-name passed-test-count test-count))))
     report))
 

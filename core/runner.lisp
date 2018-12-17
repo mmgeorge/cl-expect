@@ -34,7 +34,7 @@
 
 
 (defun package-relative-path (package)
-  (let* ((name (package-name package))
+  (let* ((name (string-downcase (if (typep package 'string) package (package-name package))))
          (start (loop for i from 0
                   for char across name until (eq char #\/)
                   finally (return (1+ i)))))
@@ -56,25 +56,39 @@
     (asdf:find-system system-name)))
 
 
-(defun load-test-file (package)
-  (let ((path (test-file-path package)))
-    (with-open-file (infile (pathname path) :direction :input)
-      (loop for input = (read infile nil)
-            while input
-            do (eval input)))))
+(defun run-tests (&optional (package-or-package-name *package*) (must-exist t))
+  (if (typep package-or-package-name 'string)
+      (run-package-suite package-or-package-name must-exist)
+      (run-package-suite (package-name package-or-package-name) must-exist)))
+
+(defun run-package-suite (package-name &optional (must-exist t))
+  (load-suite-test-file package-name must-exist)
+  (when (suite:suite-exists-p package-name)
+    (let ((report (suite:run (suite:suite-of package-name))))
+      (report:print-report report 0)
+      (report:summarize report))))
 
 
-(defun run-tests (&optional (package-or-system-name *package*))
-  (if (typep package-or-system-name 'string)
-      (run package-or-system-name)
-      ;(if (not (suite:suite-exists-p package-or-system-name))
-       ;   (format t "No tests to run") 
-          (progn
-            (load-test-file package-or-system-name)
-            (let ((report (suite:run (suite:suite-of package-or-system-name))))
-              (report:print-report report 0)
-              (report:summarize report))))
-  nil)
+(defun load-suite-test-file (package &optional (must-exist t))
+  "Load the suite for the given PACKAGE. If MUST-EXIST is true, the function will throw an error if 
+unable to load the suite"
+  ;; TODO - UGLY! loading should be an internal method of suite
+  (handler-case 
+   (let* ((path (test-file-path package))
+          (timestamp (file-write-date path)))
+     (if (suite:suite-exists-p package)
+         (unless (eq (suite:load-timestamp (suite:suite-of package)) timestamp)
+           ;; Warning! This assumes definitions are not split between PACKAGE FILE and
+           ;; PACKAGE TEST FILE which they technically could be.
+           (clear-tests package)
+           (setf (suite:load-timestamp (suite:suite-of package)) timestamp)
+           (load path))
+         (progn
+           (setf (suite:load-timestamp (suite:suite-of package)) timestamp)
+           (load path))))
+    (error (e)
+      (when (and must-exist (not (suite:suite-exists-p package)))
+        (error "Encountered an error duirng loading suite test file. Does the file exists?~%  Create a new test file for the current package with (expect:make-test-file). ~%~%Full error: ~%~a" e)))))
 
 
 (defun clear-tests (&optional (package-or-system-name *package*))
@@ -101,8 +115,8 @@
 (defun run-system (system)
   (let* ((children (gather-children system))
          (names (mapcar #'asdf:component-name children))
-         (reports (remove-if-not #'report:has-children-p 
-                                 (mapcar (lambda (name) (suite:run (suite:suite-of name))) names)))
+         (reports (remove-if-not #'(lambda (report) (and report (report:has-children-p report) ))
+                                 (mapcar (lambda (name) (run-tests name nil)) names)))
          (report (report:make-report reports)))
     (if (> (length reports) 0)
         (progn (report:print-report report 0)
