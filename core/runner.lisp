@@ -5,7 +5,7 @@
   (:import-from :expect/report/report)
   (:import-from :expect/macros #:deftest-of)
   (:import-from :blackbird)
-  (:export #:run #:run-tests #:clear-tests)
+  (:export #:run-tests #:clear-tests #:make-test-file)
   (:local-nicknames (:suite :expect/suite)
                     (:test :expect/test)
                     (:report :expect/report/report)))
