@@ -3,7 +3,7 @@
   (:import-from :expect/test)
   (:import-from :expect/report/report #:record)
   (:import-from :expect/report/suite)
-  (:export #:suite-of #:suite-exists-p #:register #:clear #:tests #:run #:load-timestamp)
+  (:export #:suite-of #:suite-exists-p #:register #:clear #:clear-all #:tests #:run #:load-timestamp)
   (:local-nicknames (:test :expect/test)
                     (:report :expect/report/report)
                     (:report/suite :expect/report/suite)))
@@ -48,6 +48,10 @@
 (defun clear (self)
   (format t "Removing ~a tests for ~a" (hash-table-count (tests self)) (package-of self))
   (setf (tests self) (make-hash-table :test 'equal)))
+
+
+(defun clear-all ()
+  (setf *suites* (make-hash-table :test 'equal)))
 
 
 (defun name (package)
