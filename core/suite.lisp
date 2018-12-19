@@ -62,10 +62,6 @@
         package-name)))
 
 
-    
-  ;(concatenate 'string (string-downcase ) ".test"))
-
-
 (defun suite-exists-p (package)
   (let ((name (name package)))
     (gethash name *suites*)))

@@ -18,8 +18,7 @@
    (description :reader description :initarg :description)
    (suite-name :reader suite-name :initarg :suite-name)
    (expects :reader expects :initform (make-array 0 :fill-pointer t :adjustable t))
-   (body :accessor body :initarg :body)
-   ))
+   (body :accessor body :initarg :body)))
 
 
 (defun make-test (name description suite-name)
@@ -35,8 +34,7 @@
 
 
 (defun clear (self)
-  (setf (slot-value self 'expects) (make-array 0 :fill-pointer t :adjustable t))
-  )
+  (setf (slot-value self 'expects) (make-array 0 :fill-pointer t :adjustable t)))
 
 
 (defun run (self)
@@ -64,5 +62,4 @@
                         (funcall (body self))
                         nil))
         (capture ()
-          (report/test:make-test (name self) (suite-name self) (description self) enviornment)
-          )))))
+          (report/test:make-test (name self) (suite-name self) (description self) enviornment))))))
