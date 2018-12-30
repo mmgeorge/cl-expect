@@ -24,9 +24,7 @@
 (defun make-test (name description suite-name)
   (make-instance 'test :name (string-downcase name)
                        :description description
-                       :suite-name (string-downcase suite-name)
-                       ))
-
+                       :suite-name (string-downcase suite-name)))
 
 
 (defun add (self expect)

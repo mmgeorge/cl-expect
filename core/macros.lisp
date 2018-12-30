@@ -2,7 +2,7 @@
   (:use :cl)
   (:import-from :expect/suite)
   (:import-from :expect/expect #:make-expect)
-  (:export #:deftest-of #:expect)
+  (:export #:deftest-of #:expect #:*print-compile-message*)
   (:local-nicknames (:suite :expect/suite)
                     (:test :expect/test)))
 
@@ -10,7 +10,7 @@
 
 
 (defvar *cl-expect-test* nil)
-
+(defvar *print-compile-message* t)
 
 (defmacro deftest-of (function () &body body)
   (let ((desc (car body)))
@@ -25,6 +25,8 @@
              (lambda ()
                (let ((*cl-expect-test* test))
                  ,@(mapcar #'macroexpand (cdr body)))))
+       (when *print-compile-message*
+         (format t "Adding test definition for ~a~%" (test:name test)))
        (suite:register (suite:suite-of *package*) test))
        *cl-expect-test*)))
 

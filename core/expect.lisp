@@ -31,15 +31,16 @@
 
 (defun safe-condition-check (predicate expected condition)
   "Check whether the given error matches the expected type"
+  ;; TODO: Add better handling for when user checks for an error using the wrong type.
+  ;; For instance, TYPE-ERROR is expected but SIMPLE-ERROR is thrown. In this case, a cryptic
+  ;; failure will be displayed
   (handler-case
       (if (eq predicate 'typep)
           (typep condition (eval expected))
           (funcall predicate
                    (class-of condition)
                    (class-of (eval expected))))
-    (t (e)
-      (format t "Encountered error ~a" e)
-      nil)))
+    (t () nil)))
 
 
 (defun safe-eval (expect)
@@ -58,15 +59,17 @@
                     (handler-bind ((error #'handle-error))
                       (eval-expect expect)))
       (condition-pred-holds ()
-        (report/expect:make-expect nil (uneval expect) (predicate expect) (form expect) (expected expect) nil nil))
+        (report/expect:make-expect nil (uneval expect) (predicate expect) (form expect)
+                                   (expected expect) nil nil))
       (capture ()
-        (report/expect:make-expect enviornment (uneval expect) (predicate expect) (form expect) (expected expect) nil nil))))))
+        (report/expect:make-expect enviornment (uneval expect) (predicate expect) (form expect) (expected expect)
+                                   nil nil))))))
 
 
 (defun eval-expect (expect)
   (let ((predicate (predicate expect))
         (form (eval (form expect)))
-        (expected (eval (expected expect))))
+        (expected (handler-case (eval (expected expect)) (t () (expected expect)))))
     ;; If we have a blackbird promise, loop until it is resolved.
     ;; TODO: add better promise handling, e.g. defer test results
     (when (typep form 'blackbird:promise)

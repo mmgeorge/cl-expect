@@ -3,7 +3,7 @@
   (:import-from :expect/suite)
   (:import-from :expect/test)
   (:import-from :expect/report/report)
-  (:import-from :expect/macros #:deftest-of)
+  (:import-from :expect/macros)
   (:import-from :blackbird)
   (:export #:run-tests #:clear-tests #:make-test-file)
   (:local-nicknames (:suite :expect/suite)
@@ -43,8 +43,8 @@
         (with-open-file (ostream (pathname path) :direction :output :if-does-not-exist :create)
           (format ostream "(defpackage :~a.test ~%  (:use :cl :~a))~%~%(in-package :~a.test)~%"
                   package-name package-name package-name))
-      (t ()
-        (format t "Unable to write file as it already exists!")))))
+      (t (e)
+        (error "Unable to create test file as it already exists!~%~% Details:~% ~a" e)))))
 
 
 ;; Internal
@@ -53,13 +53,14 @@
   (progn (report:print-report report 0)
        (report:summarize report)))
 
+
 (defun system-name-p (maybe-system-name)
   (and (typep maybe-system-name 'string) (find-system maybe-system-name)))
 
 
 (defun find-system (name)
-  (handler-case (asdf:find-system name)
-    (t () nil)))
+   (asdf:find-system name nil))
+    
 
 (defun run-system (system)
   (check-type system asdf:package-inferred-system "Expect expects a package-inferred-system")
@@ -82,21 +83,22 @@
 unable to load the suite"
   ;; TODO - UGLY! loading should be an internal method of suite
   (handler-case 
-   (let* ((path (test-file-path package))
-          (timestamp (file-write-date path)))
-     (if (suite:suite-exists-p package)
-         (unless (eq (suite:load-timestamp (suite:suite-of package)) timestamp)
-           ;; Warning! This assumes definitions are not split between PACKAGE FILE and
-           ;; PACKAGE TEST FILE which they technically could be.
-           (clear-tests package)
-           (setf (suite:load-timestamp (suite:suite-of package)) timestamp)
-           (load path))
-         (progn
-           (setf (suite:load-timestamp (suite:suite-of package)) timestamp)
-           (load path))))
+      (let* ((expect/macros:*print-compile-message* nil)
+             (path (test-file-path package))
+             (timestamp (file-write-date path)))
+        (if (suite:suite-exists-p package)
+            (unless (eq (suite:load-timestamp (suite:suite-of package)) timestamp)
+              ;; Warning! This assumes definitions are not split between PACKAGE FILE and
+              ;; PACKAGE TEST FILE which they technically could be.
+              (clear-tests package)
+              (setf (suite:load-timestamp (suite:suite-of package)) timestamp)
+              (load path))
+            (progn
+              (setf (suite:load-timestamp (suite:suite-of package)) timestamp)
+              (load path))))
     (error (e)
       (when (and must-exist (not (suite:suite-exists-p package)))
-        (error "Encountered an error duirng loading suite test file. Does the file exists?~%  Create a new test file for the current package with (expect:make-test-file). ~%~%Full error: ~%~a" e)))))
+        (error "Encountered an error during loading suite test file. Does the file exists?~%  Create a new test file for the current package with (expect:make-test-file). ~%~%Full error: ~%~a" e)))))
 
 
 (defun gather-children (system &optional (visited nil))

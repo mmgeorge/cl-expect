@@ -3,7 +3,7 @@
   (:import-from :expect/test)
   (:import-from :expect/report/report #:record)
   (:import-from :expect/report/suite)
-  (:export #:suite-of #:suite-exists-p #:register #:clear #:clear-all #:tests #:run #:load-timestamp)
+  (:export #:suite #:suite-of #:suite-exists-p #:register #:clear #:clear-all #:tests #:run #:load-timestamp)
   (:local-nicknames (:test :expect/test)
                     (:report :expect/report/report)
                     (:report/suite :expect/report/suite)))
@@ -26,7 +26,6 @@
 
 (defun register (self test)
   (let ((tests (gethash (test:name test) (tests self))))
-    (format t "Adding test definition for ~a~%" (test:name test))
     (setf (gethash (test:name test) (tests self))
           (if tests
               (insert-or-replace-test test tests)
