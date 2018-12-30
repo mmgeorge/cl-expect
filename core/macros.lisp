@@ -36,4 +36,4 @@
     `(progn 
        (unless *cl-expect-test*
          (error "Expect must be called within a test!"))
-       (test:add *cl-expect-test* (make-expect ',uneval ',predicate ,form ,expected)))))
+       (test:add *cl-expect-test* (make-expect ',uneval ',predicate ',form ',expected)))))

@@ -12,8 +12,7 @@
   ((name :reader name :initarg :name)
    (description :reader description :initarg :description)
    (suite-name :reader suite-name :initarg :suite-name)
-   (failed-env :reader failed-env :initarg :failed-env)
-   ))
+   (failed-env :reader failed-env :initarg :failed-env)))
 
 
 (defun make-test (name suite-name description &optional (failed-env nil))

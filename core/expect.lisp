@@ -52,7 +52,7 @@
                  ;; Because we evaluate this for form, pred, and expected, an error in
                  ;; evaluating one of these components (other than form) could lead to a false positive
                  (invoke-restart (find-restart 'condition-pred-holds))
-                 (progn 
+                 (progn
                    (setf enviornment (dissect:capture-environment e))
                    (invoke-restart (find-restart 'capture))))))
     (restart-case (dissect:with-truncated-stack ()
