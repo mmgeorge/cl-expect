@@ -4,7 +4,7 @@ cl-expect is a libary for testing Common Lisp projects using [`asdf:package-infe
 Current development is very much pre-alpha, and several breaking changes should be expected!
 
 ## Installation
-`cl-expect` is not currently on `quicklisp`. To use, clone the repository to your `~/common-lisp` file so that `asdf` will know where to look. 
+`cl-expect` is not currently on `quicklisp`. To use, clone the repository into your `~/common-lisp` file so that `asdf` will know where to look. 
 
 ## Basic Usage
 A simple sample project can be found in the [repository](https://github.com/mmgeorge/cl-expect/tree/master/example). 
@@ -27,6 +27,13 @@ Test of example/foo:silly-incr [Call with bad args - bad test, should fail!] fai
         
 Ran with failures: [3/5]
 ```
+## Planned Features
+- Better error messages
+- Testing fixtures (share snippets between tests with teardown hooks)
+- CI integration
+- Web interface?
+- Better test coverage
+
 ## Reference 
 **deftest-of** _function-name lambda-list docstring form*_
 
