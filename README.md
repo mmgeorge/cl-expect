@@ -63,10 +63,20 @@ When a `package` or `package-name` is given, then the corresponding `PACKAGE-NAM
 (run-tests "suite") ;; Run tests for every package of suite
 ```
 ---
+**clear-tests** &optional (_package-or-package-name-or-system-name_ \*package\*)
 
+Clear all currently loaded tests for _package-or-package-name-or-system-name_. Useful for un-loading a test definition that has been deleted. Usage is similar to `run-tests`
 
+---
+**make-test-file** &optional (_package_ \*package\*)
 
+Create a corresponding test file for the given package. 
 
+When a `package` is given, a corresponding `PACKAGE-NAME.test.lisp` file will be generated at the path at which the package's file is located. When no argument is provided, the test file is generated for the current package. When calling `run-tests`, the test runner will search for correponding test files and load them. Making changes to these files will cause them to be reloaded. 
+
+```common-lisp
+(make-test-file) ;; Make a test file for the current package
+```
 
 ## License 
 MIT
