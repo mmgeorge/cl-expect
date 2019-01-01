@@ -7,7 +7,7 @@ Current development is very much pre-alpha, and several breaking changes should 
 `cl-expect` is not currently on `quicklisp`. To use, clone the repository into your `~/common-lisp` file so that `asdf` will know where to look. 
 
 ## Basic Usage
-A simple sample project can be found in the [repository](https://github.com/mmgeorge/cl-expect/tree/master/example). The easiest way to run tests is to just load `expect` (as opposed to defining a separate `system/test` in `system.asd`).
+A simple sample project can be found in the [repository](https://github.com/mmgeorge/cl-expect/tree/master/example). The easiest way to run tests is to just load `expect` (as opposed to defining a separate `system/test` in `system.asd`). You can automate loading `expect` by adding `(ql:quickload "expect")` to your lisp's startup config file (`~/.sbclrc` for SBCL).
 ```
 EXAMPLE/FOO> (ql:quickload "expect")
 EXAMPLE/FOO> (expect:run-tests)
