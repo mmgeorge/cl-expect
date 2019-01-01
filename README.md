@@ -50,6 +50,20 @@ An expect must appear within a `deftest-of` body otherwise an error will be thro
   (expect (typep (divide 2 0) 'division-by-zero)))
 ```
 ---
+**run-tests** &optional (_package-or-package-name-or-system-name_ \*package\*)
+
+Find and run all tests for _package-or-package-name-or-system-name_.
+
+When a `package` or `package-name` is given, then the corresponding `PACKAGE-NAME.test.lisp` file will be run provided the file exists. When no argument is provided, the current package is run. If the file does not exist, any definitions for tests currently loaded in the system will be run instead. This means that `deftest-of` forms may appear intermixed with source code, or use `make-test-file` to create a dedicated file for a package's tests. When a `system-name` is provided, `run-tests` will search for correpsonding test definitions for each package. 
+
+```common-lisp
+(run-tests) ;; Run tests for the current package
+(run-tests :suite/foo) ;; Run tests for suite/foo
+(run-tests "suite/foo") ;; Run tests for suite/foo
+(run-tests "suite") ;; Run tests for every package of suite
+```
+---
+
 
 
 
