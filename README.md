@@ -53,7 +53,7 @@ Create a new test. One or more `expect` forms should be included within the body
 Create a new assertion for _form_.
 - _form_ a form to evaluate which must evaluate to non-NIL on test success. 
 
-When _test_ evaluates to T the test passed, otherwise fails. Rather than provide a libarary of designated predicates, `expect` is designed to be used with any user-provided form. It then unwraps and safely evaluates the expression. If an error is thrown, a restart is triggered and the stack is unwrapped. A stack trace, along with the test-failure, will then appear in the test report. 
+When _test_ evaluates to T the test passes, otherwise fails. Rather than provide a libarary of designated predicates, `expect` is designed to be used with any user-provided form. It then unwraps and safely evaluates the expression. If an error is thrown, a restart is triggered and the stack is unwrapped. A stack trace, along with the test-failure, will then appear in the test report. 
 
 An expect must appear within a `deftest-of` body otherwise an error will be thrown. 
 ```common-lisp
