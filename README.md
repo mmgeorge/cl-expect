@@ -94,6 +94,8 @@ When a `package` is given, a corresponding `PACKAGE-NAME.test.lisp` file will be
 ```common-lisp
 (make-test-file) ;; Make a test file for the current package
 ```
+## About
+Also check out Fukamachi's [rove](https://github.com/fukamachi/rove) which inspired this project
 
 ## License 
 MIT
