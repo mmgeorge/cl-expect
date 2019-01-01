@@ -1,5 +1,5 @@
 # Overview
-cl-expect is a libary for testing Common Lisp projects using [`asdf:package-inferred-system`](https://common-lisp.net/project/asdf/asdf/The-package_002dinferred_002dsystem-extension.html). If you are not familiar with package-inferred-system, it allows for automatic inferred builds assuming a one-package-per-file project structure. For a good guide on getting started with `package-inferred-system` check out [this](https://davazp.net/2014/11/26/modern-library-with-asdf-and-package-inferred-system.html) guide.
+cl-expect is a libary for testing Common Lisp projects using [`asdf:package-inferred-system`](https://common-lisp.net/project/asdf/asdf/The-package_002dinferred_002dsystem-extension.html). If you are not familiar with `package-inferred-system`, it allows for automatic inferred builds assuming a one-package-per-file project structure. For a good guide on getting started with `package-inferred-system` check out [this](https://davazp.net/2014/11/26/modern-library-with-asdf-and-package-inferred-system.html) guide.
 
 Current development is very much pre-alpha, and several breaking changes should be expected!
 
