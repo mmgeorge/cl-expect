@@ -3,6 +3,11 @@
 
 (in-package :example/foo.test)
 
+(deftest-of divide ()
+  "Divide two numbers"
+  (expect (eq (/ 1 1) 1))
+  (expect (typep (/ 1 0) 'division-by-zero)))
+
 
 (deftest-of add ()
   "Add two numbers"
