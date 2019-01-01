@@ -7,9 +7,9 @@ Current development is very much pre-alpha, and several breaking changes should 
 `cl-expect` is not currently on `quicklisp`. To use, clone the repository into your `~/common-lisp` file so that `asdf` will know where to look. 
 
 ## Basic Usage
-A simple sample project can be found in the [repository](https://github.com/mmgeorge/cl-expect/tree/master/example). 
-
+A simple sample project can be found in the [repository](https://github.com/mmgeorge/cl-expect/tree/master/example). The easiest way to run tests is to just load `expect` (as opposed to defining a separate `system/test` in `system.asd`).
 ```
+EXAMPLE/FOO> (ql:quickload "expect")
 EXAMPLE/FOO> (expect:run-tests)
 [FAIL] example/foo:add [1/2]     
 [FAIL] example/foo:silly-incr [2/3]
@@ -73,9 +73,9 @@ When a `package` or `package-name` is given, then the corresponding `PACKAGE-NAM
 
 ```common-lisp
 (run-tests) ;; Run tests for the current package
-(run-tests :suite/foo) ;; Run tests for suite/foo
-(run-tests "suite/foo") ;; Run tests for suite/foo
-(run-tests "suite") ;; Run tests for every package of suite
+(run-tests :system/foo) ;; Run tests for system/foo
+(run-tests "system/foo") ;; Run tests for system/foo
+(run-tests "system") ;; Run tests for every package of system
 ```
 ---
 **clear-tests** &optional (_package-or-package-name-or-system-name_ \*package\*)
