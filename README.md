@@ -42,22 +42,23 @@ Create a new test. One or more `expect` forms should be included within the body
 **expect** _form_
 
 Create a new assertion for _form_.
+- _form_ a form to evaluate which must evaluate to non-NIL on test success. 
 
 When _test_ evaluates to T the test passed, otherwise fails. Rather than provide a libarary of designated predicates, `expect` is designed to be used with any user-provided form. It then unwraps and safely evaluates the expression. If an error is thrown, a restart is triggered and the stack is unwrapped. A stack trace, along with the test-failure, will then appear in the test report. 
 
-
 An expect must appear within a `deftest-of` body otherwise an error will be thrown. 
-- _form_ a form to evaluate which must evaluate to non-NIL on test success. 
 ```common-lisp
 (deftest-of divide ()
   "Some descriptive test name"
   (expect (eq (divide 2 1) 2))
+  ;; expect can also be used to check certain errors are thrown using typep (special-case)
   (expect (typep (divide 2 0) 'division-by-zero)))
 ```
 ---
 **run-tests** &optional (_package-or-package-name-or-system-name_ \*package\*)
 
 Find and run all tests for _package-or-package-name-or-system-name_.
+- _package-or-package-name-or-system-name_ a package or string denoting a package or system name
 
 When a `package` or `package-name` is given, then the corresponding `PACKAGE-NAME.test.lisp` file will be run provided the file exists. When no argument is provided, the current package is run. If the file does not exist, any definitions for tests currently loaded in the system will be run instead. This means that `deftest-of` forms may appear intermixed with source code, or use `make-test-file` to create a dedicated file for a package's tests. When a `system-name` is provided, `run-tests` will search for correpsonding test definitions for each package. 
 
@@ -70,12 +71,14 @@ When a `package` or `package-name` is given, then the corresponding `PACKAGE-NAM
 ---
 **clear-tests** &optional (_package-or-package-name-or-system-name_ \*package\*)
 
-Clear all currently loaded tests for _package-or-package-name-or-system-name_. Useful for un-loading a test definition that has been deleted. Usage is similar to `run-tests`
+Clear all currently loaded tests for _package-or-package-name-or-system-name_. Useful for un-loading a test definition that has been deleted. Usage is similar to `run-tests`.
+- _package-or-package-name-or-system-name_ a package or string denoting a package or system name
 
 ---
 **make-test-file** &optional (_package_ \*package\*)
 
 Create a corresponding test file for the given package. 
+- _package_ a package to create the test file for.
 
 When a `package` is given, a corresponding `PACKAGE-NAME.test.lisp` file will be generated at the path at which the package's file is located. When no argument is provided, the test file is generated for the current package. When calling `run-tests`, the test runner will search for correponding test files and load them. Making changes to these files will cause them to be reloaded. 
 
