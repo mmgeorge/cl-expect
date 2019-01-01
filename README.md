@@ -23,7 +23,36 @@ Test of example/foo:silly-incr [Call with bad args - bad test, should fail!] fai
 Ran with failures: [3/5]
 ```
 ## Reference 
-TBC
+**deftest-of** _function-name lambda-list docstring form*_
+
+Create a new test. One or more `expect` forms should be included within the body of the test. 
+- _function-name_ the name of the tested function
+- _lambda-list_ an empty list (reserved for future use)
+- _docstring_ a **required** description of the test
+- _form_* one or more forms, at least one of which must be an `expect`
+```common-lisp
+(deftest-of add ()
+  "Addition of two values"
+  (expect (eq (add 1 2) 3)))
+```
+---
+**expect** _form_
+
+Create a new assertion for _form_. When _test_ evaluates to T the test passed, otherwise fails. Rather than provide a libarary of designated predicates, `expect` is designed to be used with any user-provided form. It then unwraps and safely evaluates the expression. If an error is thrown, a restart is triggered and the stack is unwrapped. A stack trace, along with the test-failure, will then appear in the test report. 
+
+
+An expect must appear within a `deftest-of` body otherwise an error will be thrown. 
+- _form_ a form to evaluate which must evaluate to non-NIL on test success. 
+```common-lisp
+(deftest-of divide ()
+  "Some descriptive test name"
+  (expect (eq (divide 2 1) 2))
+  (expect (typep (divide 2 0) 'division-by-zero)))
+```
+---
+
+
+
 
 ## License 
 MIT
