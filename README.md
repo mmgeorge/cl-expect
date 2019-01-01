@@ -7,6 +7,8 @@ Current development is very much pre-alpha, and several breaking changes should 
 `cl-expect` is not currently on `quicklisp`. To use, clone the repository to your `~/common-lisp` file so that `asdf` will know where to look. 
 
 ## Basic Usage
+A simple sample project can be found in the [repository](https://github.com/mmgeorge/cl-expect/tree/master/example). 
+
 ```
 EXAMPLE/FOO> (expect:run-tests)
 [FAIL] example/foo:add [1/2]     
