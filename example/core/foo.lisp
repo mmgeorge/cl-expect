@@ -1,12 +1,16 @@
 (defpackage :example/foo
   (:use :cl)
-  (:export #:add #:silly-incr))
+  (:export #:add #:divide #:silly-incr))
 
 (in-package :example/foo)
 
 
 (defun add (a b)
   (+ a b))
+
+
+(defun divide (a b)
+  (/ a b))
 
 
 (defun check-value-is-1 (a)

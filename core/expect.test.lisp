@@ -27,6 +27,13 @@
 
 
 (expect:deftest-of make-expect ()
+  "Some value"
+  (bb:with-promise (resolve reject)
+    (error "bad news"))
+  )
+
+
+(expect:deftest-of make-expect ()
   "Gibberish expect generates a failed report with a stack trace"
   (let* ((predicate 'NONSENSE)
          (form 'SOME_SYMBOL?)

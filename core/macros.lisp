@@ -2,7 +2,7 @@
   (:use :cl)
   (:import-from :expect/suite)
   (:import-from :expect/expect #:make-expect)
-  (:export #:deftest-of #:expect #:*print-compile-message*)
+  (:export #:deftest-of #:expect #:capture-error #:*print-compile-message*)
   (:local-nicknames (:suite :expect/suite)
                     (:test :expect/test)))
 
@@ -13,7 +13,8 @@
 (defvar *print-compile-message* t)
 
 (defmacro deftest-of (function () &body body)
-  (let ((desc (car body)))
+  (let ((desc (car body))
+        (test-body (cdr body)))
     (unless (typep desc 'string)
       (error "Malformed deftest-of form. Expected to find test description but found ~a" (type-of desc)))
   `(progn
@@ -24,7 +25,7 @@
        (setf (test:body test )
              (lambda ()
                (let ((*cl-expect-test* test))
-                 ,@(mapcar #'macroexpand (cdr body)))))
+                 ,@test-body)))
        (when *print-compile-message*
          (format t "Adding test definition for ~a~%" (test:name test)))
        (suite:register (suite:suite-of *package*) test))
@@ -36,4 +37,9 @@
     `(progn 
        (unless *cl-expect-test*
          (error "Expect must be called within a test!"))
-       (test:add *cl-expect-test* (make-expect ',uneval ',predicate ',form ',expected)))))
+       (test:add *cl-expect-test* (make-expect ,uneval ',predicate ,form ,expected)))))
+
+
+(defmacro capture-error (error-type &body body)
+  `(handler-case ,@body
+     (,error-type (e) e)))

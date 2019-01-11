@@ -3,10 +3,11 @@
 
 (in-package :example/foo.test)
 
+
 (deftest-of divide ()
   "Divide two numbers"
-  (expect (eq (/ 1 1) 1))
-  (expect (typep (/ 1 0) 'division-by-zero)))
+  (expect (eq (divide 1 1) 1))
+  (expect (typep (expect:capture-error division-by-zero (divide 1 0)) 'division-by-zero)))
 
 
 (deftest-of add ()
@@ -32,3 +33,9 @@
 (deftest-of silly-incr ()
   "Call with bad args - bad test, should fail!"
   (expect (eq (silly-incr 4 5) 9)))
+
+
+(deftest-of expand-expr ()
+  "Check expansion"
+  (let ((value 1))
+    (expect (eq value 1))))

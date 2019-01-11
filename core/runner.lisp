@@ -1,5 +1,5 @@
 (defpackage :expect/runner
-  (:use :cl)
+  (:use :cl :blackbird)
   (:import-from :expect/suite)
   (:import-from :expect/test)
   (:import-from :expect/report/report)
@@ -15,15 +15,20 @@
 
 ;; Exports
 
-(defun run-tests (&optional (package-or-name *package*))
+(defun run-tests (&optional (package-or-name *package*) (return-promise nil))
   (check-type package-or-name (or package string))
-  (print-report
-   (if (typep package-or-name 'string)
-       (let ((system (find-system package-or-name)))
-         (if system
-             (run-system system)
-             (run-package-suite package-or-name t)))
-       (run-package-suite (package-name package-or-name)))))
+  (let ((promise
+          (attach 
+           (if (typep package-or-name 'string)
+               (let ((system (find-system package-or-name)))
+                 (if system
+                     (run-system system)
+                     (run-package-suite package-or-name t)))
+               (run-package-suite (package-name package-or-name)))
+           (lambda (report)
+             (print-report report)))))
+    (when return-promise
+      promise)))
 
 
 (defun clear-tests (&optional (package-or-name *package*))
@@ -66,9 +71,10 @@
   (check-type system asdf:package-inferred-system "Expect expects a package-inferred-system")
   (let* ((children (gather-children system))
          (names (mapcar #'asdf:component-name children))
-         (reports (remove-if-not #'(lambda (report) (and report (report:has-children-p report) ))
-                                 (mapcar (lambda (name) (run-package-suite name nil)) names))))
-         (report:make-report reports)))
+         (report-promises (remove-if-not #'(lambda (report) (and report (report:has-children-p report) ))
+                                         (mapcar (lambda (name) (run-package-suite name nil)) names))))
+    (alet ((reports (all report-promises)))
+      (report:make-report reports))))
 
 
 (defun run-package-suite (package-name &optional (must-exist t))

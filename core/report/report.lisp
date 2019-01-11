@@ -1,7 +1,7 @@
 (defpackage :expect/report/report
   (:use :cl)
   (:export #:report #:make-report #:failed #:children #:has-children-p
-           #:summarize #:nested-failed-length  #:record #:print-report
+           #:summarize #:nested-failed-length #:nested-length  #:record #:print-report
            #:*indent-amount*))
 
 (in-package :expect/report/report)
@@ -13,7 +13,7 @@
 (defclass report ()
   ((children :accessor children :initform nil :initarg :children)
    (len :accessor len :initarg :len)
-   (failed :reader failed :initarg :failed :initform nil)))
+   (failed :accessor failed :initarg :failed :initform nil)))
 
 
 (defun make-report (&optional (children nil))
@@ -25,7 +25,7 @@
 (defgeneric summarize (report))
 (defgeneric has-children-p (report))
 (defgeneric nested-failed-length (report))
-
+(defgeneric nested-length (report))
 
 (defmethod record ((report report) child)
   (setf (children report) (nconc (children report) (list child))))
@@ -41,8 +41,9 @@
 
 
 (defmethod nested-failed-length ((self report))
-  (if (failed self) 1
-      (reduce #'(lambda (prev child) (+ prev (nested-failed-length child))) (children self) :initial-value 0)))
+  (cond ((failed self) 1)
+        (t (reduce #'(lambda (prev child) (+ prev (nested-failed-length child)))
+                   (children self) :initial-value 0))))
 
 
 (defmethod has-children-p ((self report))
@@ -53,4 +54,6 @@
   (let* ((failures (nested-failed-length self))
          (len (nested-length self))
          (result (if (> failures 0) "Ran with failures" "All tests passed")))
-    (format t "~%~a: [~a/~a]" result (- len failures) len)))
+    (if (eq len 1)
+        (format t "No tests found.")
+        (format t "~%~a: [~a/~a]" result (- len failures) len))))

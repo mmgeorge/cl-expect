@@ -1,5 +1,5 @@
 (defpackage :expect/suite
-  (:use :cl)
+  (:use :cl :blackbird)
   (:import-from :expect/test)
   (:import-from :expect/report/report #:record)
   (:import-from :expect/report/suite)
@@ -76,20 +76,21 @@
 (defun run (self)
   (let ((report (report/suite:make-suite (hash-table-count (tests self)) (package-of self)))
         (suite-name (package-of self)))
-    (loop for function-tests being the hash-values of (tests self) using (hash-key test-name) do
-      (let ((result-stream (make-string-output-stream))
-            (passed-test-count 0))
-        (loop for test in function-tests
-              for count = (length (test:expects test))
-              for desc = (test:description test)
-              for test-report = (test:run test) do
-                (if (> (report:nested-failed-length test-report) 0)
-                    (format result-stream "   - ~a [~a/~a]~%" desc
-                            (- count (report:nested-failed-length test-report)) count)
-                    (incf passed-test-count))
-                (record report test-report))
-        (let* ((test-count (length function-tests))
-               (result (if (eq passed-test-count test-count) "PASS" "FAIL")))
-        (format t "[~a] ~a:~a [~a/~a]~%" result suite-name test-name passed-test-count test-count))))
-    report))
-
+    (flet ((record-test (failed-test-count test)
+              (alet ((test-report (test:run test)))
+                (record report test-report)
+                (if (> (report:nested-failed-length test-report) 0 )
+                    (let* ((desc (test:description test))
+                           (expect-count (length (test:expects test)))
+                           (expect-pass-count (report:nested-failed-length test-report)))
+                      (declare (ignore desc expect-count expect-pass-count))
+                      ;;(format t "   - ~a [~a/~a]~%" desc expect-pass-count expect-count)
+                      1)
+                    failed-test-count))))
+      (loop for function-tests being the hash-values of (tests self) using (hash-key test-name) do
+        (alet* ((test-count (length function-tests))
+                (failed-test-count (areduce #'record-test function-tests 0))
+                (passed-test-count (- test-count failed-test-count))
+                (result (if (eq passed-test-count test-count) "PASS" "FAIL")))
+          (format t "[~a] ~a:~a [~a/~a]~%" result suite-name test-name passed-test-count test-count)))
+      report)))

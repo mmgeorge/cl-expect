@@ -1,5 +1,5 @@
 (defpackage :expect/test
-  (:use :cl :alexandria)
+  (:use :cl :alexandria :blackbird)
   (:import-from :dissect)
   (:import-from :expect/expect #:expect)
   (:import-from :expect/report/report #:record #:children)
@@ -40,13 +40,20 @@
     ;; We may encounter an error when evaluating the test-body. In this case, we create a
     ;; new test-report that includes details about the failure
     (clear self)
-    (when-let (failed-test-report (safe-call self))
-      (return-from run failed-test-report))
-    (let ((report (report/test:make-test (name self) (suite-name self) (description self))))
-      (loop for expect across (expects self)
-            for result = (expect:safe-eval expect)
-            do (record report result))
-      report)))
+    (attach
+     ;; safe-call may evaluate to a promise if the test-body returns one
+     (safe-call self)
+     (lambda (maybe-result)
+       (if (typep maybe-result 'report/test:test)
+           maybe-result
+           (let ((report (report/test:make-test (name self) (suite-name self) (description self))))
+             (loop for expect across (expects self)
+                   for result = (expect:safe-eval expect)
+                   do
+                      (when (report:failed result)
+                        (setf (report:failed report) t))
+                      (record report result))
+             report))))))
 
 
 (defun safe-call (self)
@@ -57,7 +64,15 @@
              (invoke-restart (find-restart 'capture))))
       (restart-case (dissect:with-truncated-stack ()
                       (handler-bind ((error #'handle-error))
-                        (funcall (body self))
-                        nil))
+                        ;; User may return a promise
+                        (catcher 
+                         (funcall (body self))
+                         ;; Todo - improve promise handling. Any way we can dump some kind of a stack trace here?
+                         ;; passing an error as enviornment will log its output instead of a trace
+                         (t (e)
+                            (setf enviornment e)
+                            (invoke-restart (find-restart 'capture))))))
         (capture ()
-          (report/test:make-test (name self) (suite-name self) (description self) enviornment))))))
+          (let ((report (report/test:make-test (name self) (suite-name self) (description self) enviornment)))
+            (setf (report:failed report) t)
+            report))))))

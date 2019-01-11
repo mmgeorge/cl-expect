@@ -15,6 +15,10 @@
   (make-instance 'suite :len len :suite-name suite-name))
 
 
+(defmethod report:nested-length ((self suite))
+  (length (report:children self)))
+
+
 (defmethod report:print-report ((self suite) indent)
   (let ((*print-case* :downcase))
     (call-next-method)))
