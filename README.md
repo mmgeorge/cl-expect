@@ -1,5 +1,5 @@
 # Overview
-cl-expect is a libary for testing Common Lisp projects using [`asdf:package-inferred-system`](https://common-lisp.net/project/asdf/asdf/The-package_002dinferred_002dsystem-extension.html). If you are not familiar with package-inferred-system, it allows for automatic inferred builds assuming a one-package-per-file project structure. For a good guide on getting started with `package-inferred-system` check out [this](https://davazp.net/2014/11/26/modern-library-with-asdf-and-package-inferred-system.html) guide.
+cl-expect is a library for testing Common Lisp projects using [`asdf:package-inferred-system`](https://common-lisp.net/project/asdf/asdf/The-package_002dinferred_002dsystem-extension.html). If you are not familiar with `package-inferred-system`, it allows for automatic inferred builds assuming a one-package-per-file project structure. For a good guide on getting started with `package-inferred-system` check out [this](https://davazp.net/2014/11/26/modern-library-with-asdf-and-package-inferred-system.html) tutorial.
 
 Current development is very much pre-alpha, and several breaking changes should be expected!
 
@@ -7,9 +7,9 @@ Current development is very much pre-alpha, and several breaking changes should 
 `cl-expect` is not currently on `quicklisp`. To use, clone the repository into your `~/common-lisp` file so that `asdf` will know where to look. 
 
 ## Basic Usage
-A simple sample project can be found in the [repository](https://github.com/mmgeorge/cl-expect/tree/master/example). 
-
+A simple sample project can be found in the [repository](https://github.com/mmgeorge/cl-expect/tree/master/example). The easiest way to run tests is to just load `expect` (as opposed to defining a separate `system/test` in `system.asd`). You can automate loading `expect` by adding `(ql:quickload "expect")` to your lisp's startup config file (`~/.sbclrc` for SBCL).
 ```
+EXAMPLE/FOO> (ql:quickload "expect")
 EXAMPLE/FOO> (expect:run-tests)
 [FAIL] example/foo:add [1/2]     
 [FAIL] example/foo:silly-incr [2/3]
@@ -53,7 +53,7 @@ Create a new test. One or more `expect` forms should be included within the body
 Create a new assertion for _form_.
 - _form_ a form to evaluate which must evaluate to non-NIL on test success. 
 
-When _test_ evaluates to T the test passed, otherwise fails. Rather than provide a libarary of designated predicates, `expect` is designed to be used with any user-provided form. It then unwraps and safely evaluates the expression. If an error is thrown, a restart is triggered and the stack is unwrapped. A stack trace, along with the test-failure, will then appear in the test report. 
+When _test_ evaluates to T the test passes, otherwise fails. Rather than provide a libarary of designated predicates, `expect` is designed to be used with any user-provided form. It then unwraps and safely evaluates the expression. If an error is thrown, a restart is triggered and the stack is unwound. A stack trace, along with the test-failure, will then appear in the test report. 
 
 An expect must appear within a `deftest-of` body otherwise an error will be thrown. 
 ```common-lisp
@@ -73,9 +73,9 @@ When a `package` or `package-name` is given, then the corresponding `PACKAGE-NAM
 
 ```common-lisp
 (run-tests) ;; Run tests for the current package
-(run-tests :suite/foo) ;; Run tests for suite/foo
-(run-tests "suite/foo") ;; Run tests for suite/foo
-(run-tests "suite") ;; Run tests for every package of suite
+(run-tests :system/foo) ;; Run tests for system/foo
+(run-tests "system/foo") ;; Run tests for system/foo
+(run-tests "system") ;; Run tests for every package of system
 ```
 ---
 **clear-tests** &optional (_package-or-package-name-or-system-name_ \*package\*)
@@ -94,6 +94,8 @@ When a `package` is given, a corresponding `PACKAGE-NAME.test.lisp` file will be
 ```common-lisp
 (make-test-file) ;; Make a test file for the current package
 ```
+## About
+Also check out Fukamachi's [rove](https://github.com/fukamachi/rove) which inspired this project
 
 ## License 
 MIT
