@@ -55,5 +55,5 @@
          (len (nested-length self))
          (result (if (> failures 0) "Ran with failures" "All tests passed")))
     (if (eq len 0)
-        (format t "No tests found.")
-        (format t "~%~a: [~a/~a]" result (- len failures) len))))
+        (format t "No tests found.~%")
+        (format t "~%~a: [~a/~a]~%" result (- len failures) len))))

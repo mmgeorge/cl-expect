@@ -102,5 +102,5 @@ executing the next in the sequence, ensuring promise is resolved in turn."
                    1
                    failed-test-count)))
       (let* ((test-names (hash-table-keys (tests self))))
-        (wait (all (amap-wait #'run-tests test-names))
+        (wait (amap-wait #'run-tests test-names)
           report)))))
