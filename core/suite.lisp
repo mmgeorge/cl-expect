@@ -1,5 +1,5 @@
 (defpackage :expect/suite
-  (:use :cl :blackbird)
+  (:use :cl :blackbird :alexandria)
   (:import-from :expect/test)
   (:import-from :expect/report/report #:record)
   (:import-from :expect/report/suite)
@@ -45,7 +45,7 @@
 
 
 (defun clear (self)
-  (format t "Removing ~a tests for ~a" (hash-table-count (tests self)) (package-of self))
+                                        ;(format t "Removing ~a tests for ~a~%" (hash-table-count (tests self)) (package-of self))
   (setf (tests self) (make-hash-table :test 'equal)))
 
 
@@ -73,24 +73,34 @@
               (make-suite name)))))
 
 
+(defun amap-wait (function list)
+  "Run map over a list of promises, finishing the returned promises once all values 
+have been fullfilled. Unlike amap, amap-wait waits on each individual promise before 
+executing the next in the sequence, ensuring promise is resolved in turn."
+  (amap #'identity
+          (reduce #'(lambda (promise-list curr)
+                      (cons
+                       (wait (car promise-list)
+                         (funcall function curr))
+                     promise-list)) list :initial-value nil)))
+
+
 (defun run (self)
   (let ((report (report/suite:make-suite (hash-table-count (tests self)) (package-of self)))
         (suite-name (package-of self)))
-    (flet ((record-test (failed-test-count test)
-              (alet ((test-report (test:run test)))
-                (record report test-report)
-                (if (> (report:nested-failed-length test-report) 0 )
-                    (let* ((desc (test:description test))
-                           (expect-count (length (test:expects test)))
-                           (expect-pass-count (report:nested-failed-length test-report)))
-                      (declare (ignore desc expect-count expect-pass-count))
-                      ;;(format t "   - ~a [~a/~a]~%" desc expect-pass-count expect-count)
-                      1)
-                    failed-test-count))))
-      (loop for function-tests being the hash-values of (tests self) using (hash-key test-name) do
-        (alet* ((test-count (length function-tests))
-                (failed-test-count (areduce #'record-test function-tests 0))
-                (passed-test-count (- test-count failed-test-count))
-                (result (if (eq passed-test-count test-count) "PASS" "FAIL")))
-          (format t "[~a] ~a:~a [~a/~a]~%" result suite-name test-name passed-test-count test-count)))
-      report)))
+    (labels ((run-tests (test-name)
+               (alet* ((function-tests (gethash test-name (tests self)))
+                       (test-count (length function-tests))
+                       (test-reports (amap-wait #'test:run function-tests))
+                       (failed-test-count (reduce #'record-test test-reports :initial-value 0))
+                       (passed-test-count (- test-count failed-test-count))
+                       (result (if (eq passed-test-count test-count) "PASS" "FAIL")))
+                 (format t "[~a] ~a:~a [~a/~a]~%" result suite-name test-name passed-test-count test-count)))
+             (record-test (failed-test-count test-report)
+               (record report test-report)
+               (if (> (report:nested-failed-length test-report) 0)
+                   1
+                   failed-test-count)))
+      (let* ((test-names (hash-table-keys (tests self))))
+        (wait (all (amap-wait #'run-tests test-names))
+          report)))))

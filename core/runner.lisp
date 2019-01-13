@@ -18,15 +18,14 @@
 (defun run-tests (&optional (package-or-name *package*) (return-promise nil))
   (check-type package-or-name (or package string))
   (let ((promise
-          (attach 
-           (if (typep package-or-name 'string)
-               (let ((system (find-system package-or-name)))
-                 (if system
-                     (run-system system)
-                     (run-package-suite package-or-name t)))
-               (run-package-suite (package-name package-or-name)))
-           (lambda (report)
-             (print-report report)))))
+          (alet ((report 
+                  (if (typep package-or-name 'string)
+                      (let ((system (find-system package-or-name)))
+                        (if system
+                            (run-system system)
+                            (run-package-suite package-or-name t)))
+                      (run-package-suite (package-name package-or-name)))))
+            (print-report report))))
     (when return-promise
       promise)))
 

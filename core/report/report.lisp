@@ -54,6 +54,6 @@
   (let* ((failures (nested-failed-length self))
          (len (nested-length self))
          (result (if (> failures 0) "Ran with failures" "All tests passed")))
-    (if (eq len 1)
+    (if (eq len 0)
         (format t "No tests found.")
         (format t "~%~a: [~a/~a]" result (- len failures) len))))

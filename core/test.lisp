@@ -65,7 +65,7 @@
       (restart-case (dissect:with-truncated-stack ()
                       (handler-bind ((error #'handle-error))
                         ;; User may return a promise
-                        (catcher 
+                        (catcher
                          (funcall (body self))
                          ;; Todo - improve promise handling. Any way we can dump some kind of a stack trace here?
                          ;; passing an error as enviornment will log its output instead of a trace

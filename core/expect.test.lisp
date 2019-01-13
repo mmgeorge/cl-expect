@@ -26,11 +26,11 @@
     (expect:expect (eq (failed (safe-eval instance)) t))))
 
 
-(expect:deftest-of make-expect ()
+(expect:deftest-of expect-in-promise ()
   "Some value"
-  (bb:with-promise (resolve reject)
-    (error "bad news"))
-  )
+   (bb:with-promise (resolve reject)
+     (expect:expect (eq 1 1))
+     (resolve nil)))
 
 
 (expect:deftest-of make-expect ()

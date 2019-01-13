@@ -1,5 +1,6 @@
 (defpackage :expect/macros
   (:use :cl)
+  (:import-from :bordeaux-threads)
   (:import-from :expect/suite)
   (:import-from :expect/expect #:make-expect)
   (:export #:deftest-of #:expect #:capture-error #:*print-compile-message*)
@@ -18,13 +19,14 @@
     (unless (typep desc 'string)
       (error "Malformed deftest-of form. Expected to find test description but found ~a" (type-of desc)))
   `(progn
-     (let ((test (test:make-test 
-                  ',function
-                  ,desc
-                  (package-name (symbol-package ',function)))))
+     (let ((test (test:make-test ',function ,desc (package-name (symbol-package ',function)))))
        (setf (test:body test )
              (lambda ()
-               (let ((*cl-expect-test* test))
+               (let* ((*cl-expect-test* test)
+                      ;; Add test to list of bordeaux threads default bindings which will cause
+                      ;; it to get passed to newly created threads
+                      (bt:*default-special-bindings*
+                        (acons '*cl-expect-test* test bt:*default-special-bindings*)))
                  ,@test-body)))
        (when *print-compile-message*
          (format t "Adding test definition for ~a~%" (test:name test)))
