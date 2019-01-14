@@ -17,6 +17,7 @@
 (defclass suite ()
   ((package-of :accessor package-of :initarg :package)
    (tests :accessor tests :initform (make-hash-table :test 'equal)  :type 'hash-table)
+   (test-names :accessor test-names :initform nil  :type 'list)
    (load-timestamp :accessor load-timestamp :initform nil)))
 
 
@@ -29,9 +30,12 @@
     (setf (gethash (test:name test) (tests self))
           (if tests
               (insert-or-replace-test test tests)
-              (list test)))))
-
-
+              (progn
+                ;; Add to ordered list of test-names
+                (setf (test-names self) (nconc (test-names self) (list (test:name test))))
+                (list test))))))
+    
+    
 (defun insert-or-replace-test (test list-of-tests)
   (flet ((same-test-p (target)
            (and (string-equal (test:suite-name target) (test:suite-name test))
@@ -45,7 +49,7 @@
 
 
 (defun clear (self)
-                                        ;(format t "Removing ~a tests for ~a~%" (hash-table-count (tests self)) (package-of self))
+  (setf (test-names self) nil)
   (setf (tests self) (make-hash-table :test 'equal)))
 
 
@@ -101,6 +105,6 @@ executing the next in the sequence, ensuring promise is resolved in turn."
                (if (> (report:nested-failed-length test-report) 0)
                    1
                    failed-test-count)))
-      (let* ((test-names (hash-table-keys (tests self))))
+      (let* ((test-names (test-names self)))
         (wait (amap-wait #'run-tests test-names)
           report)))))
