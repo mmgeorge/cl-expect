@@ -4,6 +4,7 @@
   (:import-from :expect/test)
   (:import-from :expect/report/report)
   (:import-from :expect/macros)
+  (:import-from :expect/util)
   (:import-from :blackbird)
   (:export #:run-tests #:clear-tests #:make-test-file)
   (:local-nicknames (:suite :expect/suite)
@@ -68,7 +69,7 @@
 
 (defun run-system (system)
   (check-type system asdf:package-inferred-system "Expect expects a package-inferred-system")
-  (let* ((children (gather-children system))
+  (let* ((children (expect/util:gather-children system))
          (names (mapcar #'asdf:component-name children))
          (report-promises (remove-if-not #'(lambda (report) (and report (report:has-children-p report) ))
                                          (mapcar (lambda (name) (run-package-suite name nil)) names))))
@@ -104,19 +105,11 @@ unable to load the suite"
     (error (e)
       (when (and must-exist (not (suite:suite-exists-p package)))
         (error "Encountered an error during loading suite test file. Does the file exists?~%  Create a new test file for the current package with (expect:make-test-file). ~%~%Full error: ~%~a" e)))))
-
-
-(defun gather-children (system &optional (visited nil))
-  ;; A "proper-dep" is a dependency with the same primary system name (i.e., not an external library)
-  (flet ((proper-dep-p (dep) (string-equal (asdf:primary-system-name dep) (asdf:primary-system-name system)))
-         (recurse (prev dep) (gather-children dep prev)))
-    (let* ((proper-deps (remove-if-not #'proper-dep-p (mapcar #'asdf:find-system (asdf:system-depends-on system))))
-           (unvisited-deps (set-difference proper-deps visited :test #'component-equal)))
-      (reduce #'recurse unvisited-deps :initial-value (append unvisited-deps visited)))))
+      
 
 
 (defun test-file-path (package)
-  (let* ((system (find-current-system))
+  (let* ((system (expect/util:get-current-system))
          (path-base (namestring (asdf:component-pathname system)))
          (package-relative-path (package-relative-path package))
          (extension ".test.lisp"))
@@ -130,23 +123,3 @@ unable to load the suite"
                   for char across name until (eq char #\/)
                   finally (return (1+ i)))))
     (string-downcase (subseq name start))))
-
-
-(defun parent-directory (pathname)
-  (make-pathname :directory (butlast (pathname-directory pathname))))
-
-
-(defun find-system-file (directory)
-  (flet ((asd-file-p (pathname) (string-equal (pathname-type pathname) "asd")))
-    (or (find-if #'asd-file-p (uiop:directory-files directory))
-        (find-system-file (parent-directory directory)))))
-        
-
-(defun find-current-system ()
-  (let ((system-name (pathname-name (find-system-file *default-pathname-defaults*))))
-    (asdf:find-system system-name)))
-
-
-(defun component-equal (component other)
-  (string-equal (asdf:component-name component)
-                (asdf:component-name other)))

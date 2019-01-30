@@ -57,7 +57,6 @@
 
 
 (defun safe-call (self)
-  (declare (optimize (debug 3) (safety 3) (speed 0)))
   (let ((enviornment nil))
     (flet ((handle-error (e)
              (setf enviornment (dissect:capture-environment e))
