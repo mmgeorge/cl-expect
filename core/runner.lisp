@@ -19,16 +19,23 @@
 (defun run-tests (&optional (package-or-name *package*) (return-promise nil))
   (check-type package-or-name (or package string))
   (let ((promise
-          (alet ((report 
-                  (if (typep package-or-name 'string)
-                      (let ((system (find-system package-or-name)))
-                        (if system
-                            (run-system system)
-                            (run-package-suite package-or-name t)))
-                      (run-package-suite (package-name package-or-name)))))
-            (print-report report))))
-    (when return-promise
-      promise)))
+          (catcher 
+           (alet ((report 
+                   (if (typep package-or-name 'string)
+                       (let ((system (find-system package-or-name)))
+                         (if system
+                             (run-system system)
+                             (run-package-suite package-or-name t)))
+                       (run-package-suite (package-name package-or-name)))))
+             (print-report report))
+           (t (e)
+              (format t "~%Encountered a FATAL ERROR when running tests. ~%~
+                         This likely indicates a bug in cl-expect:~2%~a~2%"
+                      (dissect:environment-condition e))
+              (format t "~{~a~%~}" (dissect:environment-stack e))))))
+    (when return-promise promise)))
+
+
 
 
 (defun clear-tests (&optional (package-or-name *package*))

@@ -107,4 +107,5 @@ executing the next in the sequence, ensuring promise is resolved in turn."
                    failed-test-count)))
       (let* ((test-names (test-names self)))
         (wait (amap-wait #'run-tests test-names)
+          (format t "~%")
           report)))))

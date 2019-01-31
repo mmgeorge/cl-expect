@@ -32,7 +32,7 @@
 
 
 (defmethod print-report ((report report) indent)
-  (mapcar #'(lambda (child) (print-report child (+ *indent-amount* indent))) (children report)))
+  (mapcar #'(lambda (child) (print-report child indent)) (children report)))
 
 
 (defmethod nested-length ((self report))

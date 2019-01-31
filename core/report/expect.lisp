@@ -26,10 +26,10 @@
   (when (failed self)
     (with-accessors ((uneval uneval) (predicate predicate) (form form) (expected expected)) self
       ;;(format t "~V@a ~a -> (~s ~s ~s)~%" indent "-" uneval predicate form expected)
-      (format t "~V@a (~s ~s ~s)~%" indent "-" predicate form expected)
+      (format t "~V@T~a (~s ~s ~s)~%" indent "-" predicate form expected)
       (if (typep (failed self) 'dissect:environment)
           (progn
             (print-failed-env (failed self) (+ report:*indent-amount* indent))
             (format t "~%"))
-          (format t "~V@a ~a does not ~a ~a~%" (+ report:*indent-amount* indent) "-" (lhs self) predicate (rhs self))))))
+          (format t "~V@T~a ~a does not ~a ~a~2%" (+ report:*indent-amount* indent) "-" (lhs self) predicate (rhs self))))))
 

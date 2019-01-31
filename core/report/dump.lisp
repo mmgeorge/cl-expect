@@ -2,6 +2,7 @@
   (:use :cl :alexandria)
   (:import-from :dissect)
   (:import-from :closer-mop)
+  (:import-from :cl-ppcre)
   (:import-from :expect/report/report *indent-amount*)
   (:import-from :expect/util #:get-current-system)
   (:export #:print-failed-env))
@@ -11,8 +12,7 @@
 
 (defun print-failed-env (failed indent)
   (let ((condition (dissect:environment-condition failed )))
-    (format t "~V@a Unexpected ~a: ~a~%" indent "-" (type-of condition) (clean-string condition))
-    (dump-stack (dissect:environment-stack failed) (+ 2 indent))))
+    (print-stack (dissect:environment-stack failed) condition indent)))
 
 
 (defun clean-string (str)
@@ -26,30 +26,6 @@
             when (not (and (eql #\space prev)
                            (eql #\space curr)))
               do (write-char curr s)))))
-
-
-(defun destructure-call (call)
-  (with-accessors ((symbol dissect:call) (line dissect:line) (args dissect:args) (file dissect:file)) call
-    (let* ((form (format nil "(~a ~{~s~^ ~})" symbol args))
-           (package (and (symbolp symbol) (package-name (symbol-package symbol))))
-           (fname (and file (file-namestring file)))
-           (detail (if fname
-                       (format nil "[~a(~a:~a)]" package fname line)
-                       (format nil "[~a]" package ))))
-      (list form detail))))
-
-
-(defun dump-stack (stack indent)
-  ;(let* ((stack (butlast (cdr stack)))
-         ;(reduced-stack (remove-if #'(lambda (call) (typep (dissect:call call) 'string)) stack))
-         ;(start
-           ;(or #+sbcl (position-if #'(lambda (call) (eql 'sb-kernel:internal-error (dissect:call call))) reduced-stack)
-               ;0))
-                                        ;(end (position-if #'(lambda (call) (eql 'eval (dissect:call call))) reduced-stack)))
-  ;(format t "hi WORLD~%")
-  (print-stack stack indent)
-  )
-
 
 
 (defun find-matching-expr (form target-list)
@@ -74,22 +50,44 @@
       (cons call-name (mapcar #'process-arg args)))))
 
 
-(defun pretty-print-failed-form (form bad-expr)
+(defun indent-newlines (str indent)
+  (cl-ppcre:regex-replace-all "(\\n)" str (format nil "~%~V@T" indent)))
+
+
+(defun pretty-print-failed-form (form bad-expr condition indent)
   (let* ((expr-str (format nil "~a" bad-expr))
          (expr-start (search expr-str form))
          (line-start (1+ (position #\newline form :end expr-start :from-end t)))
          (line-end (position  #\newline form :start expr-start))
-         (expr-line-start (- expr-start line-start))
+         (expr-line-start (+ indent (- expr-start line-start)))
          (out (concatenate 'string
-                           (subseq form 0 line-end)
-                           (format nil "~%~V@T~V~" expr-line-start (length expr-str) )
-                           (subseq form line-end (length form)))))
-    (format t "~%~A~%" out)))
+                           (format nil "~V@T" indent)
+                           (indent-newlines (subseq form 0 line-end) indent)
+                           (format nil "~%~V@T~V~~%" expr-line-start (length expr-str) )
+                           (format nil "~V@T~a" expr-line-start
+                                   (indent-newlines (trim-error-message condition) expr-line-start))
+                           ;;(subseq form line-end (length form))
+                           )))
+    (format t "~A~%" out)))
 
 
-(defun print-stack (stack indent)
+(defun pretty-print-pathname (pathname system-pathname)
+  (when pathname 
+    (let ((namestring (namestring pathname))
+          (system-namestring (namestring system-pathname)))
+      (subseq namestring (length system-namestring) (length namestring)))))
+
+
+(defun trim-error-message (condition)
+  "Trim reference page lookup from error message"
+  (let ((condition-text (format nil "~a" condition)))
+    (subseq condition-text 0 (search "See" condition-text))))
+
+
+(defun print-stack (stack condition indent)
   (let* ((current-system (get-current-system))
-         (system-name (asdf:component-name current-system)))
+         (system-name (asdf:component-name current-system))
+         (system-pathname (asdf:component-pathname current-system)))
     (flet ((current-system-package-p (platform-call)
              (let* ((other (dissect:call platform-call))
                     (other-prefix
@@ -101,19 +99,21 @@
       (let* ((pos (position-if #'current-system-package-p stack))
              (call (nth pos stack))
              (prior (nth (1- pos) stack))
-             (form (dissect:form call))
-             (bad-expr (find-matching-expr (read-from-string form) (extract-symbol-names prior))))
-        (pretty-print-failed-form form bad-expr)))))
-               
-  
-  ;(loop for call in stack
-        ;do (describe call))); (format t "  - ~a~%" (dissect:call call))))
-  
-  ;(let* ((calls (mapcar #'destructure-call stack))
-   ;      (max-len (max-member-len calls))
-    ;     (calls-with-len (mapcar (lambda (call) (cons max-len call)) calls))
-     ;    (calls-with-len-ident (mapcar (lambda (call) (cons indent (cons "-" call))) calls-with-len)))
-    ;(format t "~:{~&~V@a ~V<~A~;~> ~8@A~}~%" calls-with-len-ident)))
+             (after (nth (1+ pos) stack))
+             (form (dissect:form call)))
+        (format t "~V@T~@[In ~a:~]~@[~a, ~]~a:~2%"
+                indent (and (pretty-print-pathname (dissect:file call) system-pathname)) (dissect:line call)
+                (type-of condition))
+        (when form
+            (let ((bad-expr (find-matching-expr (read-from-string form) (extract-symbol-names prior))))
+              (pretty-print-failed-form form bad-expr condition indent)))
+        (when after
+          (format t "~V@TCalled by ~a~@[:~a~]:~%~V@T~a~%"
+                  indent
+                  (and (dissect:file after) (pretty-print-pathname (dissect:file after) system-pathname))
+                  (dissect:line after)
+                  (+ 2 indent)
+                  (dissect:call after)))))))
 
 
 (defun max-member-len (calls)
