@@ -26,13 +26,6 @@
     (expect:expect (eq (failed (safe-eval instance)) t))))
 
 
-(expect:deftest-of expect-in-promise ()
-  "Some value"
-   (bb:with-promise (resolve reject)
-     (expect:expect (eq 1 1))
-     (resolve nil)))
-
-
 (expect:deftest-of make-expect ()
   "Gibberish expect generates a failed report with a stack trace"
   (let* ((predicate 'NONSENSE)
@@ -51,3 +44,27 @@
          (uneval `(,predicate ,form ,expected))
          (instance (make-expect uneval predicate form expected)))
     (expect:expect (eq (failed (safe-eval instance)) nil))))
+
+
+(expect:deftest-of expect-in-promise ()
+  "Expect with promise"
+   (bb:with-promise (resolve reject)
+     (expect:expect (eq 1 1))
+     (resolve nil)))
+
+
+(expect:defixture fix-1 ()
+  (+ 2 3))
+
+
+(expect:defixture fix-2 ()
+  (expect:with-cleanup
+      (+ 3 3)
+    (lambda (x)
+      (declare (ignore x)))))
+
+
+(expect:deftest-of make-expect ((f1 fix-1) (f2 fix-2))
+  "Expect with fixture"
+  (expect:expect (eq f1 5))
+  (expect:expect (eq f2 6)))

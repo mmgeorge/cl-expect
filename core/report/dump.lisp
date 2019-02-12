@@ -96,24 +96,30 @@
                        (>= (length (package-name (symbol-package other))) (length system-name))
                        (subseq (package-name (symbol-package other)) 0 (length system-name)))))
                (string-equal system-name other-prefix))))
-      (let* ((pos (position-if #'current-system-package-p stack))
-             (call (nth pos stack))
-             (prior (nth (1- pos) stack))
-             (after (nth (1+ pos) stack))
-             (form (dissect:form call)))
-        (format t "~V@T~@[In ~a:~]~@[~a, ~]~a:~2%"
-                indent (and (pretty-print-pathname (dissect:file call) system-pathname)) (dissect:line call)
-                (type-of condition))
-        (when form
-            (let ((bad-expr (find-matching-expr (read-from-string form) (extract-symbol-names prior))))
-              (pretty-print-failed-form form bad-expr condition indent)))
-        (when after
-          (format t "~V@TCalled by ~a~@[:~a~]:~%~V@T~a~%"
-                  indent
-                  (and (dissect:file after) (pretty-print-pathname (dissect:file after) system-pathname))
-                  (dissect:line after)
-                  (+ 2 indent)
-                  (dissect:call after)))))))
+      (let ((pos (position-if #'current-system-package-p stack)))
+        (if pos
+            ;; Attempt to print a pretty error that includes where the error occured
+            (let* ((call (nth pos stack))
+                   (prior (and (> pos 0) (nth (1- pos) stack)))
+                   (after (nth (1+ pos) stack))
+                   (form (dissect:form call)))
+              (format t "~V@T~@[In ~a:~]~@[~a, ~]~a:~2%"
+                      indent (pretty-print-pathname (dissect:file call) system-pathname)
+                      (dissect:line call)
+                      (type-of condition))
+              (when (and form prior)
+                (let ((bad-expr (find-matching-expr (read-from-string form) (extract-symbol-names prior))))
+                  (pretty-print-failed-form form bad-expr condition indent)))
+              (when after
+                (format t "~V@TCalled by ~a~@[:~a~]:~%~V@T~a~2%"
+                        indent
+                        (and (dissect:file after)
+                             (pretty-print-pathname (dissect:file after) system-pathname))
+                        (dissect:line after)
+                        (+ 2 indent)
+                        (dissect:call after))))
+            ;; Otherwise just dump the error
+            (format t "~V@T~a~%" indent condition))))))
 
 
 (defun max-member-len (calls)

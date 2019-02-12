@@ -28,6 +28,8 @@
                              (run-package-suite package-or-name t)))
                        (run-package-suite (package-name package-or-name)))))
              (print-report report))
+           ;; TODO - clean this up! We would like to throw certain errors that occur duing
+           ;; file loading, however, this is currently clobbering those errors. 
            (t (e)
               (format t "~%Encountered a FATAL ERROR when running tests. ~%~
                          This likely indicates a bug in cl-expect:~2%~a~2%"
@@ -110,8 +112,9 @@ unable to load the suite"
               (setf (suite:load-timestamp (suite:suite-of package)) timestamp)
               (load path))))
     (error (e)
-      (when (and must-exist (not (suite:suite-exists-p package)))
-        (error "Encountered an error during loading suite test file. Does the file exists?~%  Create a new test file for the current package with (expect:make-test-file). ~%~%Full error: ~%~a" e)))))
+      (if (and must-exist (not (suite:suite-exists-p package)))
+          (error "Encountered an error during loading suite test file. Does the file exists?~%  Create a new test file for the current package with (expect:make-test-file). ~%~%Full error: ~%~a" e)
+          (format t "~%Load Error: ~a~%" e)))))
       
 
 

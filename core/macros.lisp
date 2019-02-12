@@ -3,17 +3,44 @@
   (:import-from :bordeaux-threads)
   (:import-from :expect/suite)
   (:import-from :expect/expect #:make-expect)
-  (:export #:deftest-of #:expect #:capture-error #:*print-compile-message*)
+  (:import-from :expect/fixture)
+  (:export #:deftest-of #:expect #:defixture #:with-cleanup #:capture-error #:*print-compile-message*)
   (:local-nicknames (:suite :expect/suite)
-                    (:test :expect/test)))
+                    (:test :expect/test)
+                    (:fixture :expect/fixture)))
 
 (in-package :expect/macros)
 
 
 (defvar *cl-expect-test* nil)
+(defvar *in-fixture* nil)
 (defvar *print-compile-message* t)
 
-(defmacro deftest-of (function () &body body)
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun expand-fixture-list (fixture-list body)
+    (if fixture-list
+      (destructuring-bind (var fixture) (car fixture-list)
+        (let* ((fixture (eval fixture))
+               (before (fixture:before fixture))
+               (after (fixture:after fixture))
+               (next (expand-fixture-list (cdr fixture-list) body))
+               (inner-form (if after `(bb:finally ,next (funcall #',after ,var)) next)))
+          `(bb:attach ,before (lambda (,var) ,inner-form))))
+      `(progn ,@body))))
+
+
+;; (bb:attach
+;;  (fixture:run before)
+;;  (lambda (server)
+;;    (bb:finally 
+;;        (wait (client:send-await server "hi folks!~%" )
+;;          (expect (string-equal (client:read self) "hi folks~%"))))
+;;    (funcall #'fixture:after server ))))
+
+
+
+(defmacro deftest-of (function fixtures &body body)
   (let ((desc (car body))
         (test-body (cdr body)))
     (unless (typep desc 'string)
@@ -27,7 +54,7 @@
                       ;; it to get passed to newly created threads
                       (bt:*default-special-bindings*
                         (acons '*cl-expect-test* test bt:*default-special-bindings*)))
-                 ,@test-body)))
+                 ,(expand-fixture-list fixtures test-body))))
        (when *print-compile-message*
          (format t "Adding test definition for ~a~%" (test:name test)))
        (suite:register (suite:suite-of *package*) test))
@@ -45,3 +72,18 @@
 (defmacro capture-error (error-type &body body)
   `(handler-case ,@body
      (,error-type (e) e)))
+
+
+(defmacro defixture (name () &body body)
+  `(let ((*in-fixture* t))
+     ,(if (eq (caar body) 'with-cleanup)
+          `(defparameter ,name ,@(macroexpand body))
+          `(defparameter ,name  
+             (make-instance 'fixture:fixture :before '(progn ,@body) :after nil)))))
+
+
+(defmacro with-cleanup (before cleanup)
+  `(progn
+     (unless *in-fixture*
+       (error "with-cleanup must appear within a defixture form"))
+     (make-instance 'fixture:fixture :before `(progn ,',before) :after ',cleanup)))
