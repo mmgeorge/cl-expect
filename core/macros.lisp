@@ -49,12 +49,15 @@
      (let ((test (test:make-test ',function ,desc (package-name (symbol-package ',function)))))
        (setf (test:body test )
              (lambda ()
-               (let* ((*cl-expect-test* test)
-                      ;; Add test to list of bordeaux threads default bindings which will cause
-                      ;; it to get passed to newly created threads
-                      (bt:*default-special-bindings*
-                        (acons '*cl-expect-test* test bt:*default-special-bindings*)))
-                 ,(expand-fixture-list fixtures test-body))))
+               ,(expand-fixture-list
+                 fixtures
+                 `((let* ((*cl-expect-test* test)
+                        ;; Add test to list of bordeaux threads default bindings which will cause
+                        ;; it to get passed to newly created threads
+                        ;; (bt:*default-special-bindings*
+                         ;;     ,(acons '*cl-expect-test* test bt:*default-special-bindings*))
+                    )
+                   ,@test-body)))))
        (when *print-compile-message*
          (format t "Adding test definition for ~a~%" (test:name test)))
        (suite:register (suite:suite-of *package*) test))
@@ -85,5 +88,5 @@
 (defmacro with-cleanup (before cleanup)
   `(progn
      (unless *in-fixture*
-       (error "with-cleanup must appear within a defixture form"))
+       (error "with-cleanup must be called within a defixture form!"))
      (make-instance 'fixture:fixture :before `(progn ,',before) :after ',cleanup)))

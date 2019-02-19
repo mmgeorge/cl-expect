@@ -102,7 +102,8 @@ executing the next in the sequence, ensuring promise is resolved in turn."
                  (format t "[~a] ~a:~a [~a/~a]~%" result suite-name test-name passed-test-count test-count)))
              (record-test (failed-test-count test-report)
                (record report test-report)
-               (if (> (report:nested-failed-length test-report) 0)
+               (if (or (report:failed test-report)
+                       (> (report:nested-failed-length test-report) 0))
                    1
                    failed-test-count)))
       (let* ((test-names (test-names self)))

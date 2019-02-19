@@ -19,6 +19,14 @@
   (length (report:children self)))
 
 
+(defmethod report:nested-failed-length ((self suite))
+  (flet ((failed-test-p (test)
+           (or (report:failed test)
+               (> (report:nested-failed-length test) 0))))
+    (length (remove-if-not #'failed-test-p (report:children self)))))
+
+
+
 (defmethod report:print-report ((self suite) indent)
   (let ((*print-case* :downcase))
     (call-next-method)))

@@ -23,8 +23,8 @@
 
 (defun make-test (name description suite-name)
   (make-instance 'test :name (string-downcase name)
-                       :description description
-                       :suite-name (string-downcase suite-name)))
+                 :description description
+                 :suite-name (string-downcase suite-name)))
 
 
 (defun add (self expect)
@@ -48,11 +48,11 @@
            maybe-result
            (let ((report (report/test:make-test (name self) (suite-name self) (description self))))
              (loop for expect across (expects self)
-                   for result = (expect:safe-eval expect)
-                   do
-                      (when (report:failed result)
-                        (setf (report:failed report) t))
-                      (record report result))
+                for result = (expect:safe-eval expect)
+                do
+                  (when (report:failed result)
+                    (setf (report:failed report) t))
+                  (record report result))
              report))))))
 
 
@@ -65,12 +65,15 @@
                       (handler-bind ((error #'handle-error))
                         ;; User may return a promise
                         (catcher
-                         (funcall (body self))
-                         ;; Todo - improve promise handling. Any way we can dump some kind of a stack trace here?
-                         ;; passing an error as enviornment will log its output instead of a trace
+                         (progn
+                           (funcall (body self)))
+                         ;; passing an error as enviornment will log its
+                         ;; output instead of a trace
                          (t (e)
                             (setf enviornment e)
-                            (invoke-restart (find-restart 'capture))))))
+                            (let ((report (report/test:make-test (name self) (suite-name self) (description self) enviornment)))
+                              (setf (report:failed report) t)
+                              report)))))
         (capture ()
           (let ((report (report/test:make-test (name self) (suite-name self) (description self) enviornment)))
             (setf (report:failed report) t)

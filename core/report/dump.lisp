@@ -63,7 +63,7 @@
          (out (concatenate 'string
                            (format nil "~V@T" indent)
                            (indent-newlines (subseq form 0 line-end) indent)
-                           (format nil "~%~V@T~V~~%" expr-line-start (length expr-str) )
+                           (format nil "~%~V@T~V~~%" expr-line-start (length expr-str))
                            (format nil "~V@T~a" expr-line-start
                                    (indent-newlines (trim-error-message condition) expr-line-start))
                            ;;(subseq form line-end (length form))
@@ -108,8 +108,15 @@
                       (dissect:line call)
                       (type-of condition))
               (when (and form prior)
-                (let ((bad-expr (find-matching-expr (read-from-string form) (extract-symbol-names prior))))
-                  (pretty-print-failed-form form bad-expr condition indent)))
+                (handler-case 
+                    (let ((bad-expr (find-matching-expr (read-from-string form) (extract-symbol-names prior))))
+                      (pretty-print-failed-form form bad-expr condition indent))
+                  (t (e)
+                    (format t "~V@T~a~2%" indent (trim-error-message condition))
+                    (format t "~V@Tcl-expect - cannot-print-form~%" indent)
+                    (format t "~V@T~V~~%" indent 80)
+                    (format t "~V@T~a~%" indent e)
+                    (format t "~V@T~V~~%" indent 80))))
               (when after
                 (format t "~V@TCalled by ~a~@[:~a~]:~%~V@T~a~2%"
                         indent
