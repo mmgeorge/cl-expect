@@ -25,19 +25,14 @@
                (before (fixture:before fixture))
                (after (fixture:after fixture))
                (next (expand-fixture-list (cdr fixture-list) body))
-               (inner-form (if after `(bb:finally ,next (funcall #',after ,var)) next)))
-          `(bb:attach ,before (lambda (,var) ,inner-form))))
+               ;; Prevent accidental capture, esp. (deftest-of x ((var var) (var2 var2)) ...)
+               (sym (gensym (symbol-name var)))
+               (wrapped-next `(let ((,var ,sym)) ,next))
+               (inner-form (if after
+                               `(bb:finally ,wrapped-next (funcall #',after ,sym))
+                               wrapped-next)))
+          `(bb:attach ,before (lambda (,sym) ,inner-form))))
       `(progn ,@body))))
-
-
-;; (bb:attach
-;;  (fixture:run before)
-;;  (lambda (server)
-;;    (bb:finally 
-;;        (wait (client:send-await server "hi folks!~%" )
-;;          (expect (string-equal (client:read self) "hi folks~%"))))
-;;    (funcall #'fixture:after server ))))
-
 
 
 (defmacro deftest-of (function fixtures &body body)
@@ -52,11 +47,8 @@
                ,(expand-fixture-list
                  fixtures
                  `((let* ((*cl-expect-test* test)
-                        ;; Add test to list of bordeaux threads default bindings which will cause
-                        ;; it to get passed to newly created threads
-                        ;; (bt:*default-special-bindings*
-                         ;;     ,(acons '*cl-expect-test* test bt:*default-special-bindings*))
-                    )
+                          (bb:*promise-keep-specials*
+                            (cons '*cl-expect-test* bb:*promise-keep-specials*)))
                    ,@test-body)))))
        (when *print-compile-message*
          (format t "Adding test definition for ~a~%" (test:name test)))
