@@ -65,10 +65,14 @@
                       (handler-bind ((error #'handle-error))
                         ;; User may return a promise
                         (catcher
-                         (progn
-                           (funcall (body self)))
-                         ;; passing an error as enviornment will log its
-                         ;; output instead of a trace
+                           ;; (when (find-package "CL-ASYNC")
+                           ;;   (funcall (symbol-function (find-symbol "DELAY" "CL-ASYNC"))
+                           ;;            #'(lambda ()
+                           ;;                (reject (error "Timer expired"))) :time 5))
+                           (progn
+                             (funcall (body self)))
+                           ;; passing an error as enviornment will log its
+                           ;; output instead of a trace
                          (t (e)
                             (setf enviornment e)
                             (let ((report (report/test:make-test (name self) (suite-name self) (description self) enviornment)))
