@@ -29,7 +29,8 @@
                              (run-system system)
                              (run-package-suite package-or-name t)))
                        (run-package-suite (package-name package-or-name)))))
-             (print-report report))
+                 (print-report report)
+                 report)
            ;; TODO - clean this up! We would like to throw certain errors that occur duing
            ;; file loading, however, this is currently clobbering those errors. 
            (t (e)
@@ -78,7 +79,6 @@
     
 
 (defun run-system (system)
-  (format t "run system~%")
   (check-type system asdf:package-inferred-system "Expect expects a package-inferred-system")
   (let* ((children (expect/util:gather-children system))
          (names (mapcar #'asdf:component-name children))
@@ -90,7 +90,6 @@
 
 
 (defun run-package-suite (package-name &optional (must-exist t))
-  (format t "run package ~A~%" package-name)
   (load-suite-test-file package-name must-exist)
   (if (suite:suite-exists-p package-name)
       (suite:run (suite:suite-of package-name))
