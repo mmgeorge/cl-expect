@@ -29,7 +29,7 @@ Ran with failures: [3/5]
 ```
 ## Planned Features
 - Better error messages
-- Testing fixtures (share snippets between tests with teardown hooks)
+- Fixture dependencies
 - CI integration
 - Web interface?
 - Better test coverage
