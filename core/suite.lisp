@@ -4,9 +4,11 @@
   (:import-from :expect/report/report #:record)
   (:import-from :expect/report/suite)
   (:export #:suite #:suite-of #:suite-exists-p #:register #:clear #:clear-all #:tests #:run #:load-timestamp)
-  (:local-nicknames (:test :expect/test)
-                    (:report :expect/report/report)
-                    (:report/suite :expect/report/suite)))
+  (:local-nicknames
+    (:test :expect/test)
+    (:util :expect/util)
+    (:report :expect/report/report)
+    (:report/suite :expect/report/suite)))
 
 (in-package :expect/suite)
 
@@ -77,16 +79,6 @@
               (make-suite name)))))
 
 
-(defun amap-wait (function list)
-  "Run map over a list of promises, finishing the returned promises once all values 
-have been fullfilled. Unlike amap, amap-wait waits on each individual promise before 
-executing the next in the sequence, ensuring promise is resolved in turn."
-  (amap #'identity
-          (reduce #'(lambda (promise-list curr)
-                      (cons
-                       (wait (car promise-list)
-                         (funcall function curr))
-                     promise-list)) list :initial-value nil)))
 
 
 (defun run (self)
@@ -95,7 +87,7 @@ executing the next in the sequence, ensuring promise is resolved in turn."
     (labels ((run-tests (test-name)
                (alet* ((function-tests (gethash test-name (tests self)))
                        (test-count (length function-tests))
-                       (test-reports (amap-wait #'test:run function-tests))
+                       (test-reports (util:amap-wait #'test:run function-tests))
                        (failed-test-count (reduce #'record-test test-reports :initial-value 0))
                        (passed-test-count (- test-count failed-test-count))
                        (result (if (eq passed-test-count test-count) "PASS" "FAIL")))
@@ -107,6 +99,5 @@ executing the next in the sequence, ensuring promise is resolved in turn."
                    1
                    failed-test-count)))
       (let* ((test-names (test-names self)))
-        (wait (amap-wait #'run-tests test-names)
-          (format t "~%")
+        (wait (util:amap-wait #'run-tests test-names)
           report)))))

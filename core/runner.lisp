@@ -7,9 +7,11 @@
   (:import-from :expect/util)
   (:import-from :blackbird)
   (:export #:run-tests #:clear-tests #:make-test-file)
-  (:local-nicknames (:suite :expect/suite)
-                    (:test :expect/test)
-                    (:report :expect/report/report)))
+  (:local-nicknames
+    (:suite :expect/suite)
+    (:util :expect/util)
+    (:test :expect/test)
+    (:report :expect/report/report)))
 
 (in-package :expect/runner)
 
@@ -52,7 +54,6 @@
 (defun make-test-file (&optional (package *package*))
   (let ((package-name (string-downcase (package-name package)))
         (path (test-file-path package)))
-    (format t "Writing test file at ~a~%" path)
     (handler-case 
         (with-open-file (ostream (pathname path) :direction :output :if-does-not-exist :create)
           (format ostream "(defpackage :~a.test ~%  (:use :cl :~a))~%~%(in-package :~a.test)~%"
@@ -77,20 +78,23 @@
     
 
 (defun run-system (system)
+  (format t "run system~%")
   (check-type system asdf:package-inferred-system "Expect expects a package-inferred-system")
   (let* ((children (expect/util:gather-children system))
          (names (mapcar #'asdf:component-name children))
          (report-promises (bb:afilter #'(lambda (report) (and report (report:has-children-p report) ))
-                                         (mapcar (lambda (name) (run-package-suite name nil)) names))))
+                                      (util:amap-wait (lambda (name)
+                                                         (run-package-suite name nil)) names))))
     (alet ((reports (all report-promises)))
       (report:make-report reports))))
 
 
 (defun run-package-suite (package-name &optional (must-exist t))
+  (format t "run package ~A~%" package-name)
   (load-suite-test-file package-name must-exist)
-  (when (suite:suite-exists-p package-name)
-    (let ((report (suite:run (suite:suite-of package-name))))
-      report)))
+  (if (suite:suite-exists-p package-name)
+      (suite:run (suite:suite-of package-name))
+      (bb:promisify nil)))
 
 
 (defun load-suite-test-file (package &optional (must-exist t))

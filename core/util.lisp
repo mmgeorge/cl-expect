@@ -1,8 +1,20 @@
 (defpackage :expect/util
-  (:use :cl)
-  (:export #:get-current-system #:gather-children))
+  (:use :cl :blackbird)
+  (:export #:amap-wait #:get-current-system #:gather-children))
 
 (in-package :expect/util)
+
+
+(defun amap-wait (function list)
+  "Run map over a list of promises, finishing the returned promises once all values 
+have been fullfilled. Unlike amap, amap-wait waits on each individual promise before 
+executing the next in the sequence, ensuring promise is resolved in turn."
+  (bb:all
+   (reduce #'(lambda (promise-list curr)
+               (cons
+                (bb:wait (car promise-list)
+                      (funcall function curr))
+                promise-list)) list :initial-value nil)))
 
 
 (defun get-current-system ()
