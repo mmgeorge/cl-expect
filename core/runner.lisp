@@ -80,7 +80,7 @@
   (check-type system asdf:package-inferred-system "Expect expects a package-inferred-system")
   (let* ((children (expect/util:gather-children system))
          (names (mapcar #'asdf:component-name children))
-         (report-promises (remove-if-not #'(lambda (report) (and report (report:has-children-p report) ))
+         (report-promises (bb:afilter #'(lambda (report) (and report (report:has-children-p report) ))
                                          (mapcar (lambda (name) (run-package-suite name nil)) names))))
     (alet ((reports (all report-promises)))
       (report:make-report reports))))
@@ -97,24 +97,24 @@
   "Load the suite for the given PACKAGE. If MUST-EXIST is true, the function will throw an error if 
 unable to load the suite"
   ;; TODO - UGLY! loading should be an internal method of suite
-  (handler-case 
+  (handler-case
       (let* ((expect/macros:*print-compile-message* nil)
-             (path (test-file-path package))
-             (timestamp (file-write-date path)))
-        (if (suite:suite-exists-p package)
-            (unless (eq (suite:load-timestamp (suite:suite-of package)) timestamp)
-              ;; Warning! This assumes definitions are not split between PACKAGE FILE and
-              ;; PACKAGE TEST FILE which they technically could be.
-              (clear-tests package)
-              (setf (suite:load-timestamp (suite:suite-of package)) timestamp)
-              (load path))
-            (progn
-              (setf (suite:load-timestamp (suite:suite-of package)) timestamp)
-              (load path))))
+             (path (test-file-path package)))
+        (if (probe-file path)
+            (let ((timestamp (file-write-date path)))
+              (if (suite:suite-exists-p package)
+                  (unless (eq (suite:load-timestamp (suite:suite-of package)) timestamp)
+                    ;; Warning! This assumes definitions are not split between PACKAGE FILE and
+                    ;; PACKAGE TEST FILE which they technically could be.
+                    (clear-tests package)
+                    (setf (suite:load-timestamp (suite:suite-of package)) timestamp)
+                    (load path))
+                  (progn
+                    (setf (suite:load-timestamp (suite:suite-of package)) timestamp)
+                    (load path))))
+            (and must-exist (error "Unable to load suite test file. Does the file exists?~%  Create a new test file for the current package with (expect:make-test-file)."))))
     (error (e)
-      (if (and must-exist (not (suite:suite-exists-p package)))
-          (error "Encountered an error during loading suite test file. Does the file exists?~%  Create a new test file for the current package with (expect:make-test-file). ~%~%Full error: ~%~a" e)
-          (format t "~%Load Error: ~a~%" e)))))
+      (format t "~%Load Error: ~a~%" e))))
       
 
 
