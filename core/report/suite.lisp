@@ -1,7 +1,7 @@
 (defpackage :expect/report/suite
   (:use :cl)
   (:import-from :expect/report/report)
-  (:export #:suite #:make-suite)
+  (:export #:suite #:make-suite #:suite-name)
   (:local-nicknames (:report :expect/report/report)))
 
 (in-package :expect/report/suite)

@@ -3,4 +3,5 @@
 (asdf:defsystem "expect"
   :class :package-inferred-system
   :pathname "core"
-  :depends-on (:expect/exports))
+  :depends-on (:expect/exports
+               :expect/report/output/junit))

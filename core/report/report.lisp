@@ -1,6 +1,7 @@
 (defpackage :expect/report/report
   (:use :cl)
   (:export #:report #:make-report #:failed #:children #:has-children-p
+           #:write-to-output
            #:summarize #:nested-failed-length #:nested-length  #:record #:print-report
            #:*indent-amount*))
 
@@ -26,6 +27,8 @@
 (defgeneric has-children-p (report))
 (defgeneric nested-failed-length (report))
 (defgeneric nested-length (report))
+(defgeneric write-to-output (report output))
+
 
 (defmethod record ((report report) child)
   (setf (children report) (nconc (children report) (list child))))

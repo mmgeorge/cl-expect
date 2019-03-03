@@ -3,7 +3,7 @@
   (:import-from :dissect)
   (:import-from :expect/report/report #:failed)
   (:import-from :expect/report/dump #:print-failed-env)
-  (:export #:test #:make-test)
+  (:export #:test #:make-test #:name #:description #:failed-env)
   (:local-nicknames (:report :expect/report/report)))
 
 (in-package :expect/report/test)
