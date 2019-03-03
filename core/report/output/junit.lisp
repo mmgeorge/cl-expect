@@ -39,7 +39,6 @@
             (cxml:attribute "name" (suite:suite-name suite))
             (cxml:attribute "errors" 0)
             (cxml:attribute "tests" 0)
-            (cxml:attribute "tests" 0)
             ;;(cxml:attribute "time" 0)
             ;;(cxml:attribute "timestamp" 0)
             (loop for test in (report:children suite) do
