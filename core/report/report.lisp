@@ -22,7 +22,7 @@
 
 
 (defgeneric record (report child))
-(defgeneric print-report (report indent))
+(defgeneric print-report (report stream indent))
 (defgeneric summarize (report))
 (defgeneric has-children-p (report))
 (defgeneric nested-failed-length (report))
@@ -34,8 +34,8 @@
   (setf (children report) (nconc (children report) (list child))))
 
 
-(defmethod print-report ((report report) indent)
-  (mapcar #'(lambda (child) (print-report child indent)) (children report)))
+(defmethod print-report ((report report) stream indent)
+  (mapcar #'(lambda (child) (print-report child stream indent)) (children report)))
 
 
 (defmethod nested-length ((self report))

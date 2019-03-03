@@ -66,7 +66,7 @@
 ;; Internal
 
 (defun print-report (report)
-  (progn (report:print-report report 0)
+  (progn (report:print-report report *standard-output* 0)
        (report:summarize report)))
 
 

@@ -4,6 +4,7 @@
   (:import-from :expect/report/test #:test)
   (:import-from :expect/report/suite #:suite)
   (:import-from :expect/report/expect #:expect)
+  (:import-from :expect/report/dump #:write-failed-env)
   (:import-from :cxml)
   (:export #:junit #:make)
   (:local-nicknames
@@ -37,19 +38,30 @@
         (cxml:with-element "testsuites"
           (cxml:with-element "testsuite"
             (cxml:attribute "name" (suite:suite-name suite))
-            (cxml:attribute "errors" 0)
-            (cxml:attribute "tests" 0)
+            (cxml:attribute "tests" (report:nested-length suite))
+            (cxml:attribute "failures" (report:nested-failed-length suite))
+            ;;(cxml:attribute "errors" 0)
             ;;(cxml:attribute "time" 0)
             ;;(cxml:attribute "timestamp" 0)
             (loop for test in (report:children suite) do
               (report:write-to-output test target))))))))
-  
 
-  (defmethod report:write-to-output ((test test) (target junit))
-    (cxml:with-element "testcase"
-      (cxml:attribute "classname" (test:name test))
-      (cxml:attribute "name" (test:description test))
-      (cxml:with-element "failure"
-        (cxml:attribute "message" "It broke")
-        (cxml:text "Some random text failure"))
-      ))
+
+(defmethod report:write-to-output ((test test) (target junit))
+  (cxml:with-element "testcase"
+    (cxml:attribute "classname" (test:name test))
+    (cxml:attribute "name" (test:description test))
+    (if (test:failed-env test)
+        (cxml:with-element "error"
+          (cxml:attribute "message" (format nil "~A" (dissect:environment-condition (test:failed-env test))))
+          (cxml:text (format nil "~A" (with-output-to-string (stream)
+                                        (write-failed-env (test:failed-env test) stream 2)))))
+        (when (find-if #'report:failed (report:children test))
+          (let ((total (report:nested-length test))
+                (failed (report:nested-length test)))
+            (cxml:with-element "failure"
+              (cxml:attribute "message" (format nil "Failed ~A of ~A assertions" failed total))
+              (cxml:text
+               (with-output-to-string (stream)
+                 (mapcar #'(lambda (child) (report:print-report child stream 2))
+                         (report:children test))))))))))

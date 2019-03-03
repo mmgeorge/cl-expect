@@ -2,7 +2,7 @@
   (:use :cl)
   (:import-from :dissect)
   (:import-from :expect/report/report #:failed)
-  (:import-from :expect/report/dump #:print-failed-env)
+  (:import-from :expect/report/dump #:write-failed-env)
   (:export #:test #:make-test #:name #:description #:failed-env)
   (:local-nicknames (:report :expect/report/report)))
 
@@ -25,15 +25,15 @@
   (length (remove-if-not #'failed (report:children self))))
 
 
-(defmethod report:print-report ((self test) indent)
+(defmethod report:print-report ((self test) stream indent)
   (cond ((failed-env self)
-         (format t "~V@T~a:~a [~a]:~%"
+         (format stream "~V@T~a:~a [~a]:~%"
                  indent (suite-name self) (name self) (description self))
          (if (typep (failed-env self) 'dissect:environment )
-             (print-failed-env (failed-env self) (+ report:*indent-amount* indent))
+             (write-failed-env (failed-env self) stream (+ report:*indent-amount* indent))
              (format t "~Va ~a~%" indent "" (failed-env self))))
         ((find-if #'failed (report:children self))
-         (format t "~%")
-         (format t "~V@T~a:~a [~a] failed [~a] expects:~%"
+         (format stream "~%")
+         (format stream "~V@T~a:~a [~a] failed [~a] expects:~%"
                  indent (suite-name self) (name self) (description self) (report:nested-failed-length self))
-         (mapcar #'(lambda (child) (report:print-report child (+ 2 indent))) (report:children self)))))
+         (mapcar #'(lambda (child) (report:print-report child stream (+ 2 indent))) (report:children self)))))

@@ -27,7 +27,7 @@
 
 
 
-(defmethod report:print-report ((self suite) indent)
+(defmethod report:print-report ((self suite) stream indent)
   (let ((*print-case* :downcase))
     (call-next-method)))
 

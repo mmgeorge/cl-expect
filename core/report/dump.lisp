@@ -5,14 +5,14 @@
   (:import-from :cl-ppcre)
   (:import-from :expect/report/report *indent-amount*)
   (:import-from :expect/util #:get-current-system)
-  (:export #:print-failed-env))
+  (:export #:write-failed-env))
 
 (in-package :expect/report/dump)
 
 
-(defun print-failed-env (failed indent)
+(defun write-failed-env (failed stream indent)
   (let ((condition (dissect:environment-condition failed )))
-    (print-stack (dissect:environment-stack failed) condition indent)))
+    (write-stack (dissect:environment-stack failed) condition stream indent)))
 
 
 (defun clean-string (str)
@@ -54,7 +54,7 @@
   (cl-ppcre:regex-replace-all "(\\n)" str (format nil "~%~V@T" indent)))
 
 
-(defun pretty-print-failed-form (form bad-expr condition indent)
+(defun pretty-print-failed-form (form bad-expr condition stream indent)
   (let* ((expr-str (format nil "~a" bad-expr))
          (expr-start (search expr-str form))
          (line-start (1+ (position #\newline form :end expr-start :from-end t)))
@@ -68,7 +68,7 @@
                                    (indent-newlines (trim-error-message condition) expr-line-start))
                            ;;(subseq form line-end (length form))
                            )))
-    (format t "~A~%" out)))
+    (format stream "~A~%" out)))
 
 
 (defun pretty-print-pathname (pathname system-pathname)
@@ -84,7 +84,7 @@
     (subseq condition-text 0 (search "See" condition-text))))
 
 
-(defun print-stack (stack condition indent)
+(defun write-stack (stack condition stream indent)
   (let* ((current-system (get-current-system))
          (system-name (asdf:component-name current-system))
          (system-pathname (asdf:component-pathname current-system)))
@@ -103,20 +103,20 @@
                    (prior (and (> pos 0) (nth (1- pos) stack)))
                    (after (nth (1+ pos) stack))
                    (form (dissect:form call)))
-              (format t "~V@T~@[In ~a:~]~@[~a, ~]~a:~2%"
+              (format stream "~V@T~@[In ~a:~]~@[~a, ~]~a:~2%"
                       indent (pretty-print-pathname (dissect:file call) system-pathname)
                       (dissect:line call)
                       (type-of condition))
               (when (and form prior)
                 (handler-case 
                     (let ((bad-expr (find-matching-expr (read-from-string form) (extract-symbol-names prior))))
-                      (pretty-print-failed-form form bad-expr condition indent))
+                      (pretty-print-failed-form form bad-expr condition stream indent))
                   (t (e)
-                    (format t "~V@T~a~2%" indent (trim-error-message condition))
-                    (format t "~V@Tcl-expect - cannot-print-form~%" indent)
-                    (format t "~V@T~V~~%" indent 80)
-                    (format t "~V@T~a~%" indent e)
-                    (format t "~V@T~V~~%" indent 80))))
+                    (format stream "~V@T~a~2%" indent (trim-error-message condition))
+                    (format stream "~V@Tcl-expect - cannot-print-form~%" indent)
+                    (format stream "~V@T~V~~%" indent 80)
+                    (format stream "~V@T~a~%" indent e)
+                    (format stream "~V@T~V~~%" indent 80))))
               (when after
                 (format t "~V@TCalled by ~a~@[:~a~]:~%~V@T~a~2%"
                         indent
@@ -126,7 +126,7 @@
                         (+ 2 indent)
                         (dissect:call after))))
             ;; Otherwise just dump the error
-            (format t "~V@T~a~%" indent condition))))))
+            (format stream "~V@T~a~%" indent condition))))))
 
 
 (defun max-member-len (calls)
